@@ -97,6 +97,8 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
                         Fmt := Trim(SubStr(Typ, 9))
                         nodeFor[CurrID] := (Fmt = "") ? "dddd MMMM d, yyyy HH:mm:ss tt" : Fmt
                         Typ := "DateTime", Des := ""
+                    } Else If (Typ = "CheckBox") {
+                        Des := ""
                     }
                     nodeTyp[CurrID] := Typ
                 } Else If (SubStr(Des, 1, 9) = "Default: ") {
@@ -251,14 +253,17 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
                 Try hkCtrl.Value   := CurrVal
                 ddl.Delete()
                 Items := StrSplit(nodeFor.Get(CurrID, ""), "|")
-                If (Items.Length > 0 && Items[1] != "")
+                If (Items.Length > 0 && Items[1] != "") {
                     ddl.Add(Items)
-                ddl.Choose(CurrVal)
+                    ddl.Choose(CurrVal)
+                }
                 Try chkBox.Value := Integer(CurrVal)
                 edt1.Enabled    := true
                 btnDefault.Enabled := true
             }
-            edt2.Value := nodeDes.Get(CurrID, "")
+            Des     := RTrim(nodeDes.Get(CurrID, ""), "`n")
+            DefText := !nodeSec.Get(CurrID, false) ? (Des != "" ? "`n`n" : "") "Default: " nodeDef.Get(CurrID, "") : ""
+            edt2.Value := Des . DefText
         }
         LastID := CurrID
 
@@ -269,7 +274,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
 
         ; Save value if it changed
         If (CurrID && nodeSec.Get(CurrID, false) = false) {
-            NewVal := ControlUsed.Value
+            NewVal := (Typ = "DropDown") ? ControlUsed.Text : ControlUsed.Value
             If (NewVal != CurrVal || ValChanged) {
                 ValChanged := false
 
