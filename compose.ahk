@@ -44,6 +44,7 @@ A_TrayMenu.Add("&Restart", MenuRestart)
 A_TrayMenu.Add()
 A_TrayMenu.Add("&Settings...", MenuSettings)
 A_TrayMenu.Add("&Help", MenuHelp)
+A_TrayMenu.Add("&Key Table", MenuKeyTable)
 A_TrayMenu.Add("&About", MenuAbout)
 A_TrayMenu.Add("E&xit", MenuExit)
 
@@ -95,4 +96,8 @@ MenuAbout(*) {
 
 MenuExit(*) {
     ExitApp()
+}
+
+MenuKeyTable(*) {
+    Run(A_ScriptDir . "\key-table.md")
 }
