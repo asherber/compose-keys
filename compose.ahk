@@ -17,7 +17,7 @@ ResetDelay    := IniRead(A_ScriptDir "\config.ini", "Settings", "ResetDelay")
 ; Convert the 'human' key name to an AHK approved version!
 key_map := {RAlt: "Right Alt", LAlt: "Left Alt", RControl: "Right Ctrl", RWin: "Right Winkey", LWin: "Left Winkey", Esc: "Escape", Insert: "Insert", Numlock: "Num Lock", Tab: "Tab", None: "None"}
 
-for key, value in key_map {
+for key, value in key_map.OwnProps() {
     if (value == ModifierKey) {
         key_name := key
         break
