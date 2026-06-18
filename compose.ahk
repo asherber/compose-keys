@@ -90,7 +90,7 @@ MenuHelp(*) {
 }
 
 MenuAbout(*) {
-    MsgBox("Compose Keys`n`nby Symon Bent`n(henrybadao@gmail.com)", "Compose Key", "Iconinfo")
+    MsgBox("Compose Keys`n`nby Symon Bent`n(henrybadao@gmail.com)", "Compose Key", 64)
 }
 
 MenuExit(*) {
