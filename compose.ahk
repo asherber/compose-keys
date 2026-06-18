@@ -27,7 +27,7 @@ for key, value in key_map.OwnProps() {
 ; Tell the user that compose-keys has loaded, and which modifier is active
 TrayTip("Compose Keys is now running...`nPress [ " ModifierKey " ] to start a new key sequence.", "Compose Keys", 1)
 
-A_TrayMenu.ClickCount := 1
+A_TrayMenu.ClickCount := 2
 A_TrayMenu.Delete()
 
 ; Display the current modifier key at the top of the menu
@@ -47,7 +47,7 @@ A_TrayMenu.Add("&Help", MenuHelp)
 A_TrayMenu.Add("&About", MenuAbout)
 A_TrayMenu.Add("E&xit", MenuExit)
 
-A_TrayMenu.Default := "&Help"
+A_TrayMenu.Default := "&Settings..."
 A_IconTip := "Compose Keys : right-click for options."
 TraySetIcon("compose.ico")
 
