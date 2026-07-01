@@ -99,5 +99,5 @@ MenuExit(*) {
 }
 
 MenuKeyTable(*) {
-    Run(A_ScriptDir . "\key-table.md")
+    Run(A_ScriptDir . "\compose-key-table.md")
 }
