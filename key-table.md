@@ -344,3 +344,4 @@ Type the pair (without spaces) after your compose key to insert the character.
 | ➨ | <code>+></code> | Fat arrow to right |
 | 〝 | <code>"\\</code> | Reversed double prime quotation mark |
 | 〞 | <code>"/</code> | Double prime quotation mark |
+| • | `.=` | Bullet |
