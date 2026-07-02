@@ -29,7 +29,7 @@ disabled := false
 ; User settings
 SoundOnReset := IniRead(AssetDir "\config.ini", "Settings", "SoundOnReset")
 ModifierKey   := IniRead(AssetDir "\config.ini", "Settings", "ModifierKey")
-UseCapslock   := IniRead(AssetDir "\config.ini", "Settings", "UseCapslock")
+UseCapsLock   := IniRead(AssetDir "\config.ini", "Settings", "UseCapsLock")
 ResetDelay    := IniRead(AssetDir "\config.ini", "Settings", "ResetDelay")
 
 ; Allows user to easily edit the settings
@@ -54,10 +54,10 @@ A_TrayMenu.Delete()
 ; Display the current modifier key at the top of the menu
 A_TrayMenu.Add(ModifierKey, MenuModifierKey)
 A_TrayMenu.Disable(ModifierKey)
-A_TrayMenu.Add("&Capslock", MenuUseCapslock)
-A_TrayMenu.Disable("&Capslock")
-if (UseCapslock == 1) {
-    A_TrayMenu.Check("&Capslock")
+A_TrayMenu.Add("&CapsLock", MenuUseCapsLock)
+A_TrayMenu.Disable("&CapsLock")
+if (UseCapsLock == 1) {
+    A_TrayMenu.Check("&CapsLock")
 }
 A_TrayMenu.Add()
 A_TrayMenu.Add("&Disable", DisableKey)
@@ -65,7 +65,8 @@ A_TrayMenu.Add("&Restart", MenuRestart)
 A_TrayMenu.Add()
 A_TrayMenu.Add("&Settings...", MenuSettings)
 A_TrayMenu.Add("&Help", MenuHelp)
-A_TrayMenu.Add("&Key Table", MenuKeyTable)
+A_TrayMenu.Add("Compose &Key Table", MenuKeyTable)
+A_TrayMenu.Add()
 A_TrayMenu.Add("&About", MenuAbout)
 A_TrayMenu.Add("E&xit", MenuExit)
 
@@ -81,7 +82,7 @@ MenuModifierKey(*) {
     ; Void — item is disabled, only shown for info
 }
 
-MenuUseCapslock(*) {
+MenuUseCapsLock(*) {
     ; Void — item is disabled, only shown for info
 }
 

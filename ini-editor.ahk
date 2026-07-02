@@ -54,6 +54,8 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     chkBox     := myGui.Add("CheckBox",     "x215 y114 w340 h20 Hidden")
     myGui.Add("GroupBox", "x4 y63 w560 h263")
 
+    SetEditMargins(edt2.Hwnd, 5, 5)
+
     myGui.SetFont("Bold")
     myGui.Add("Text", "x215 y93",  "Value")
     myGui.Add("Text", "x215 y154", "Description")
@@ -372,4 +374,13 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         MsgBox(HelpText, ProgName " Settings Help", 64)
     }
 
+    SetEditMargins(hwnd, left, right) {
+        EM_SETMARGINS := 0xD3
+        EC_LEFTMARGIN := 0x1
+        EC_RIGHTMARGIN := 0x2
+        if (left != "")
+            SendMessage(EM_SETMARGINS, EC_LEFTMARGIN, left, , "ahk_id " hwnd)
+        if (right != "")
+            SendMessage(EM_SETMARGINS, EC_RIGHTMARGIN, right << 16, , "ahk_id " hwnd)
+    }
 }
