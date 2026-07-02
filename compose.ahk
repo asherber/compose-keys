@@ -1,15 +1,36 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 
-TraySetIcon("compose.ico")
+;@Ahk2Exe-SetMainIcon compose.ico
+;@Ahk2Exe-Base ../v2/AutoHotKey64.exe
+;@Ahk2Exe-ExeName compose-keys
+;@Ahk2Exe-SetCopyright ©2026
+;@Ahk2Exe-SetDescription Compose Keys
+;@Ahk2Exe-SetVersion  2.0.1
+
+
+AssetDir := A_IsCompiled ? A_AppData . "\ComposeKeys" : A_ScriptDir
+if A_IsCompiled
+{
+    DirCreate(AssetDir)
+}
+
+FileInstall("style.css", AssetDir "\style.css", 1)
+FileInstall("help.html", AssetDir "\help.html", 1)
+FileInstall("keytable.html", AssetDir "\keytable.html", 1)
+FileInstall("compose.ico", AssetDir "\compose.ico", 1)
+FileInstall("compose2.ico", AssetDir "\compose2.ico", 1)
+Try FileInstall("config.ini", AssetDir "\config.ini", 0)
+
+TraySetIcon(AssetDir "\compose.ico")
 
 disabled := false
 
 ; User settings
-SoundOnReset := IniRead(A_ScriptDir "\config.ini", "Settings", "SoundOnReset")
-ModifierKey   := IniRead(A_ScriptDir "\config.ini", "Settings", "ModifierKey")
-UseCapslock   := IniRead(A_ScriptDir "\config.ini", "Settings", "UseCapslock")
-ResetDelay    := IniRead(A_ScriptDir "\config.ini", "Settings", "ResetDelay")
+SoundOnReset := IniRead(AssetDir "\config.ini", "Settings", "SoundOnReset")
+ModifierKey   := IniRead(AssetDir "\config.ini", "Settings", "ModifierKey")
+UseCapslock   := IniRead(AssetDir "\config.ini", "Settings", "UseCapslock")
+ResetDelay    := IniRead(AssetDir "\config.ini", "Settings", "ResetDelay")
 
 ; Allows user to easily edit the settings
 #Include ini-editor.ahk
@@ -50,7 +71,7 @@ A_TrayMenu.Add("E&xit", MenuExit)
 
 A_TrayMenu.Default := "&Settings..."
 A_IconTip := "Compose Keys : right-click for options."
-TraySetIcon("compose.ico")
+TraySetIcon(AssetDir "\compose.ico")
 
 ; This is where the real action is!
 ; Loads all the compose key combinations and the cp() function.
@@ -70,11 +91,11 @@ DisableKey(*) {
     if (disabled == true) {
         disabled := false
         A_TrayMenu.Uncheck("&Disable")
-        TraySetIcon("compose.ico")
+        TraySetIcon(AssetDir "\compose.ico")
     } else {
         disabled := true
         A_TrayMenu.Check("&Disable")
-        TraySetIcon("compose2.ico")
+        TraySetIcon(AssetDir "\compose2.ico")
     }
 }
 
@@ -83,11 +104,11 @@ MenuRestart(*) {
 }
 
 MenuSettings(*) {
-    IniSettingsEditor("Compose", "config.ini")
+    IniSettingsEditor("Compose", AssetDir "\config.ini")
 }
 
 MenuHelp(*) {
-    Run("help.html")
+    Run(AssetDir "\help.html")
 }
 
 MenuAbout(*) {
@@ -99,5 +120,5 @@ MenuExit(*) {
 }
 
 MenuKeyTable(*) {
-    Run("keytable.html")
+    Run(AssetDir "\keytable.html")
 }
