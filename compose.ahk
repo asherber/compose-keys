@@ -87,7 +87,7 @@ MenuSettings(*) {
 }
 
 MenuHelp(*) {
-    Run("notepad.exe " A_ScriptDir "\help.txt")
+    Run("help.html")
 }
 
 MenuAbout(*) {
@@ -99,5 +99,5 @@ MenuExit(*) {
 }
 
 MenuKeyTable(*) {
-    Run(A_ScriptDir . "\compose-key-table.md")
+    Run("keytable.html")
 }
