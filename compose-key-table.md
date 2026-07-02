@@ -88,7 +88,7 @@ Type the pair (without spaces) after your compose key to insert the character.
 | ô | <code>^o</code> | Small letter o with circumflex |
 | õ | <code>~o</code> | Small letter o with tilde |
 | ö | <code>"o</code> | Small letter o with diaeresis |
-| ÷ | <code>:-</code>, <code>-::</code> | Division sign |
+| ÷ | <code>:-</code>, <code>-:</code> | Division sign |
 | ø | <code>/o</code> | Small letter o with stroke |
 | ù | <code>`u</code> | Small letter u with grave |
 | ú | <code>'u</code> | Small letter u with acute |
