@@ -113,7 +113,12 @@ MenuHelp(*) {
 }
 
 MenuAbout(*) {
-    MsgBox("Compose Keys`n`nby Symon Bent`n(henrybadao@gmail.com)", "Compose Key", 64)
+    AppName := "Compose Keys"
+    if A_IsCompiled
+        AppName .= " v" FileGetVersion(A_ScriptFullPath)
+    Symon := "Symon Bent`n(henrybadao@gmail.com)"
+    Aaron := "Aaron Sherber`n(aaron@sherber.com)"
+    MsgBox(Format("{}`n`nby {}`n`n{}", AppName, Symon, Aaron), "Compose Key", 64)
 }
 
 MenuExit(*) {
