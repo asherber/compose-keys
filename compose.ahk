@@ -20,7 +20,10 @@ FileInstall("help.html", AssetDir "\help.html", 1)
 FileInstall("keytable.html", AssetDir "\keytable.html", 1)
 FileInstall("compose.ico", AssetDir "\compose.ico", 1)
 FileInstall("compose2.ico", AssetDir "\compose2.ico", 1)
-Try FileInstall("config.ini", AssetDir "\config.ini", 0)
+if !FileExist(AssetDir "\config.ini")
+{
+    FileInstall("config.ini", AssetDir "\config.ini", 1)
+}
 
 TraySetIcon(AssetDir "\compose.ico")
 
