@@ -14,12 +14,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Compile compose.ahk
-        uses: nukdokplex/autohotkey-build@v1
+        uses: benmusson/ahk2exe-action@v1
         with:
-          in: compose.ahk          
+          in: .\compose.ahk
+          out: .\build\${{ env.EXE_NAME }}
+          target: x64
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Read version from compiled exe
         id: version
@@ -61,7 +64,7 @@ jobs:
           "EOF" >> $env:GITHUB_OUTPUT
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
