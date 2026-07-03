@@ -1,581 +1,386 @@
 ;#############   Edit ini file settings in a GUI   #############################
-;  A function that can be used to edit settings in an ini file within it's own
+;  A function that can be used to edit settings in an ini file within its own
 ;  GUI. Just plug this function into your script.
 ;
-;  by Rajat, mod by toralf
-;  www.autohotkey.com/forum/viewtopic.php?p=69534#69534
+;  Original: by Rajat, mod by toralf
+;  AHK v2 port: updated for AutoHotkey v2
 ;
-;   Tested OS: Windows XP Pro SP2
-;   AHK_version= 1.0.44.09     ;(http://www.autohotkey.com/download/)
-;   Language: English
-;   Date: 2006-08-23
-;
-;   Version: 6
-;
-; changes since 5:
-; - add key type "checkbox" with custom control name
-; - added key field options (will only apply in Editor window)
-; - whole sections can be set hidden
-; - reorganized code in Editor and Creator
-; - some fixes and adjustments
-; changes since 1.4
-; - Creator and Editor GUIs are resizeable (thanks Titan). The shortened Anchor function
-;    is added with a long name, to avoid nameing conflicts and avoid dependencies.
-; - switched from 1.x version numbers to full integer version numbers
-; - requires AHK version 1.0.44.09
-; - fixed blinking of description field
-; changes since 1.3:
-; - added field option "Hidden" (thanks jballi)
-; - simplified array naming
-; - shorted the code
-; changes since 1.2:
-; - fixed a bug in the description (thanks jaballi and robiandi)
-; changes since 1.1:
-; - added statusbar (thanks rajat)
-; - fixed a bug in Folder browsing
-; changes since 1.0:
-; - added default value (thanks rajat)
-; - fixed error with DisableGui=1 but OwnedBy=0 (thanks kerry)
-; - fixed some typos
-;  
 ; format:
 ; =======
-;   IniSettingsEditor(ProgName, IniFile[, OwnedBy = 0, DisableGui = 0, Help = 0])
+;   IniSettingsEditor(ProgName, IniFile[, OwnedBy := 0, DisableGui := 0, HelpText := ""])
 ;
-; with
-;   ProgName - A string used in the GUI as text to describe the program 
-;   IniFile - that ini file name (with path if not in script directory)
-;   OwnedBy - GUI ID of the calling GUI, will make the settings GUI owned
+;   ProgName   - A string used in the GUI to describe the program
+;   IniFile    - The ini file name (with path if not in script directory)
+;   OwnedBy    - Gui object of the calling GUI (or 0); makes settings GUI owned
 ;   DisableGui - 1=disables calling GUI during editing of settings
+;   HelpText   - Optional help text shown when F1 is pressed
 ;
-; example to call in script:
-;   IniSettingsEditor("Hello World", "Settings.ini", 0, 0)
-;
-; Include function with:
-;   #Include Func_IniSettingsEditor_v6.ahk
-;
-; No global variables needed.
-;
-; features:
-; =========
-; - the calling script will wait for the function to end, thus till the settings
-;     GUI gets closed. 
-; - Gui ID for the settings GUI is not hard coded, first free ID will be used 
-; - multiple description lines (comments) for each key and section possible 
-; - all characters are allowed in section and key names
-; - when settings GUI is started first key in first section is pre-selected and
-;     first section is expanded
-; - tree branches expand when items get selected and collapse when items get
-;     unselected
-; - key types besides the default "Text" are supported 
-;    + "File" and "Folder", will have a browse button and its functionality 
-;    + "Float" and "Integer" with consistency check 
-;    + "Hotkey" with its own hotkey control 
-;    + "DateTime" with its own datetime control and custom format, default is
-;        "dddd MMMM d, yyyy HH:mm:ss tt"
-;    + "DropDown" with its own dropdown control, list of choices has to be given
-;        list is pipe "|" separated 
-;    + "Checkbox" where the name of the checkbox can be customized
-; - default value can be specified for each key 
-; - keys can be set invisible (hidden) in the tree
-; - to each key control additional AHK specific options can be assigned  
-;
-; format of ini file:
-; ===================
-;     (optional) descriptions: to help the script's users to work with the settings 
-;     add a description line to the ini file following the relevant 'key' or 'section'
-;     line, put a semi-colon (starts comment), then the name of the key or section
-;     just above it and a space, followed by any descriptive helpful comment you'd
-;     like users to see while editing that field. 
-;     
-;     e.g.
-;     [SomeSection]
-;     ;somesection This can describe the section. 
-;     Somekey=SomeValue 
-;     ;somekey Now the descriptive comment can explain this item. 
-;     ;somekey More then one line can be used. As many as you like.
-;     ;somekey [Type: key type] [format/list] 
-;     ;somekey [Default: default key value] 
-;     ;somekey [Hidden:] 
-;     ;somekey [Options: AHK options that apply to the control] 
-;     ;somekey [CheckboxName: Name of the checkbox control] 
-;     
-;     (optional) key types: To limit the choice and get correct input a key type can
-;     be set or each key. Identical to the description start an extra line put a
-;     semi-colon (starts comment), then the name of the key with a space, then the
-;     string "Type:" with a space followed by the key type. See the above feature
-;     list for available key types. Some key types have custom formats or lists,
-;     they are written after the key type with a space in-between.
-;     
-;     (optional) default key value: To allow a easy and quick way back to a 
-;     default value, you can specify a value as default. If no default is given,
-;     users can go back to the initial key value of that editing session.
-;     Format: Identical to the description start an extra line, put a semi-colon
-;     (starts comment line), then the name of the key with a space, then the
-;     string "Default:" with a space followed by the default value.
-;
-;     (optional) hide key in tree: To hide a key from the user, a key can be set 
-;     hidden.
-;     Format: Identical to the description start an extra line, put a semi-colon
-;     (starts comment line), then the name of the key with a space, then the
-;     string "Hidden:".
-;
-;     (optional) add additional AHK options to key controls. To limit the input
-;     or enforce a special input into the key controls in the GUI, additional 
-;     AHK options can be specified for each control.
-;     Format: Identical to the description start an extra line, put a semi-colon
-;     (starts comment line), then the name of the key with a space, then the
-;     string "Options" with a space followed by a list of AHK options for that
-;     AHK control (all separated with a space).
-;
-;     (optional) custom checkbox name: To have a more relavant name then e.g.
-;     "status" a custom name for the checkbox key type can be specified.
-;     Format: Identical to the description start an extra line, put a semi-colon
-;     (starts comment line), then the name of the key with a space, then the
-;     string "CheckboxName:" with a space followed by the name of the checkbox.
-;
-;
-; limitations:
-; ============
-; - ini file has to exist and created manually or with the IniFileCreator script
-; - section lines have to start with [ and end with ]. No comments allowed on
-;     same line
-; - ini file must only contain settings. Scripts can't be used to store setting,
-;     since the file is read and interpret as a whole. 
-; - code: can't use g-labels for tree or edit fields, since the arrays are not
-;     visible outside the function, hence inside the g-label subroutines. 
-; - code: can't make GUI resizable, since this is only possible with hard
-;     coded GUI ID, due to %GuiID%GuiSize label
+; example:
+;   IniSettingsEditor("Hello World", "Settings.ini")
 
-IniSettingsEditor(ProgName,IniFile,OwnedBy = 0,DisableGui = 0, HelpText = "") {
-    DetectHiddenWindows, Off
-    static pos
-     
-    ;Find a GUI ID that does not exist yet 
-    Loop, 99 { 
-      Gui %A_Index%:+LastFoundExist 
-      If not WinExist() { 
-          SettingsGuiID = %A_Index% 
-          break 
-      }Else If (A_Index = 99){ 
-          MsgBox, 4112, Error in IniSettingsEditor function, Can't open settings dialog,`nsince no GUI ID was available. 
-          Return 0   
-        } 
-      } 
-    Gui, %SettingsGuiID%:Default 
+IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := "") {
 
-    ;apply options to settings GUI 
-    If OwnedBy { 
-        Gui, +ToolWindow +Owner%OwnedBy% 
-        If DisableGui 
-            Gui, %OwnedBy%:+Disabled 
-    }Else
-        DisableGui := False 
-    
-    Gui, +Resize +LabelGuiIniSettingsEditor
-    IfNotEqual, OwnedBy, 0
-        Gui, %OwnedBy%:+OwnDialogs
-    ;create GUI (order of the two edit controls is crucial, since ClassNN is order dependent) 
-    Gui, Add, Statusbar
-    Gui, Add, TreeView, x16 y75 w180 h242 0x400
-    Gui, Add, Edit, x215 y114 w340 h20,                           ;ahk_class Edit1
-    Gui, Add, Edit, x215 y174 w340 h120 ReadOnly,                 ;ahk_class Edit2
-    Gui, Add, Button, x250 y335 w70 h30 gExitSettings , E&xit     ;ahk_class Button1
-    Gui, Add, Button, x505 y88 gBtnBrowseKeyValue Hidden, B&rowse ;ahk_class Button2
-    Gui, Add, Button, x215 y294 gBtnDefaultValue, &Restore        ;ahk_class Button3
-    Gui, Add, DateTime, x215 y114 w340 h20 Hidden,                ;ahk_class SysDateTimePick321
-    Gui, Add, Hotkey, x215 y114 w340 h20 Hidden,                  ;ahk_class msctls_hotkey321
-    Gui, Add, DropDownList, x215 y114 w340 h120 Hidden,           ;ahk_class ComboBox1 
-    Gui, Add, CheckBox, x215 y114 w340 h20 Hidden,                ;ahk_class Button4 
-    Gui, Add, GroupBox, x4 y63 w560 h263 ,                        ;ahk_class Button5
-    Gui, Font, Bold 
-    Gui, Add, Text, x215 y93, Value                               ;ahk_class Static1
-    Gui, Add, Text, x215 y154, Description                        ;ahk_class Static2
-    HelpTip = ( All changes are Auto-Saved )
-    IfNotEqual, HelpText,
-    {
-        HelpTip = ( All changes are Auto-Saved - Press F1 for Help )
-        Hotkey, IfWinActive, %ProgName% Settings
-        Hotkey, F1, ShowHelp
-        Hotkey, F1, On
+    ; Data storage (replacing v1 pseudo-arrays)
+    nodeVal  := Map()   ; ItemID -> current value
+    nodeDef  := Map()   ; ItemID -> default value
+    nodeDes  := Map()   ; ItemID -> description text
+    nodeTyp  := Map()   ; ItemID -> key type string
+    nodeFor  := Map()   ; ItemID -> format/list string
+    nodeOpt  := Map()   ; ItemID -> extra AHK options
+    nodeChkN := Map()   ; ItemID -> checkbox label
+    nodeSec  := Map()   ; ItemID -> true if section, false if key
+
+    ; Create GUI
+    myGui := Gui("+Resize", ProgName " Settings")
+
+    If OwnedBy {
+        myGui.Opt("+ToolWindow +Owner" OwnedBy.Hwnd)
+        If DisableGui
+            OwnedBy.Opt("+Disabled")
+    } Else
+        DisableGui := false
+
+    ; Add controls (order matters for ClassNN compatibility)
+    sb         := myGui.Add("StatusBar")
+    tv         := myGui.Add("TreeView",     "x16 y75 w180 h242 0x400")
+    edt1       := myGui.Add("Edit",         "x215 y114 w340 h20")
+    edt2       := myGui.Add("Edit",         "x215 y174 w340 h120 ReadOnly")
+    btnExit    := myGui.Add("Button",       "x250 y335 w70 h30",  "E&xit")
+    btnBrowse  := myGui.Add("Button",       "x505 y88 Hidden",    "B&rowse")
+    btnDefault := myGui.Add("Button",       "x215 y294",          "&Restore")
+    dtPicker   := myGui.Add("DateTime",     "x215 y114 w340 h20 Hidden")
+    hkCtrl     := myGui.Add("Hotkey",       "x215 y114 w340 h20 Hidden")
+    ddl        := myGui.Add("DropDownList", "x215 y114 w340 h120 Hidden")
+    chkBox     := myGui.Add("CheckBox",     "x215 y114 w340 h20 Hidden")
+    myGui.Add("GroupBox", "x4 y63 w560 h263")
+
+    SetEditMargins(edt2.Hwnd, 5, 5)
+
+    myGui.SetFont("Bold")
+    myGui.Add("Text", "x215 y93",  "Value")
+    myGui.Add("Text", "x215 y154", "Description")
+
+    HelpTip := "( All changes are Auto-Saved )"
+    If (HelpText != "") {
+        HelpTip := "( All changes are Auto-Saved - Press F1 for Help )"
+        HotIf(() => WinActive(ProgName " Settings"))
+        Hotkey("F1", ShowHelp)
+        HotIf()
     }
-    Gui, Add, Text, x45 y48 w480 h20 +Center, %HelpTip% 
-    Gui, Font, S16 CDefault Bold, Verdana 
-    Gui, Add, Text, x45 y13 w480 h35 +Center, Settings for %ProgName% 
-  
-    ;read data from ini file, build tree and store values and description in arrays 
-    Loop, Read, %IniFile% 
-      { 
-        CurrLine = %A_LoopReadLine% 
-        CurrLineLength := StrLen(CurrLine) 
-    
-        ;blank line 
-        If CurrLine is space 
-            Continue 
-    
-        ;description (comment) line 
-        If ( InStr(CurrLine,";") = 1 ){
-            StringLeft, chk2, CurrLine, % CurrLength + 2 
-            StringTrimLeft, Des, CurrLine, % CurrLength + 2 
-            ;description of key
-            If ( %CurrID%Sec = False AND ";" CurrKey A_Space = chk2){ 
-                ;handle key types  
-                If ( InStr(Des,"Type: ") = 1 ){ 
-                    StringTrimLeft, Typ, Des, 6 
-                    Typ = %Typ% 
-                    ;the next line modded to hide the Type: from description
-                    Des = ;`n%Des%     ;add an extra line to the type definition in the description control
-                    
-                    ;handle format or list  
-                    If (InStr(Typ,"DropDown ") = 1) {
-                        StringTrimLeft, Format, Typ, 9
-                        %CurrID%For = %Format%
-                        Typ = DropDown
-                        Des =
-                    }Else If (InStr(Typ,"DateTime") = 1) {
-                        StringTrimLeft, Format, Typ, 9
-                        If Format is space
-                            Format = dddd MMMM d, yyyy HH:mm:ss tt 
-                        %CurrID%For = %Format%
-                        Typ = DateTime
-                        Des =
-                      }
-                    ;set type
-                    %CurrID%Typ := Typ 
-                ;remember default value
-                }Else If ( InStr(Des,"Default: ") = 1 ){ 
-                    StringTrimLeft, Def, Des, 9 
-                    %CurrID%Def = %Def% 
-                ;remember custom options  
-                }Else If ( InStr(Des,"Options: ") = 1 ){ 
-                    StringTrimLeft, Opt, Des, 9 
-                    %CurrID%Opt = %Opt%
-                    Des =
-                ;remove hidden keys from tree
-                }Else If ( InStr(Des,"Hidden:") = 1 ){  
-                    TV_Delete(CurrID)
-                    Des =
-                    CurrID =
-                ;handle checkbox name
-                }Else If ( InStr(Des,"CheckboxName: ") = 1 ){  
-                    StringTrimLeft, ChkN, Des, 14 
-                    %CurrID%ChkN = %ChkN%  
-                    Des =
-                  } 
-                %CurrID%Des := %CurrID%Des "`n" Des 
-            ;description of section 
-            } Else If ( %CurrID%Sec = True AND ";" CurrSec A_Space = chk2 ){
-                ;remove hidden section from tree
-                If ( InStr(Des,"Hidden:") = 1 ){  
-                    TV_Delete(CurrID)
-                    Des =
-                    CurrSecID =
-                  }
-                ;set description
-                %CurrID%Des := %CurrID%Des "`n" Des 
-              } 
-                
-            ;remove leading and trailing whitespaces and new lines
-            If ( InStr(%CurrID%Des, "`n") = 1 )
-                StringTrimLeft, %CurrID%Des, %CurrID%Des, 1  
-            Continue 
-          } 
-    
-        ;section line 
-        If ( InStr(CurrLine, "[") = 1 And InStr(CurrLine, "]", "", 0) = CurrLineLength) { 
-            ;extract section name
-            StringTrimLeft, CurrSec, CurrLine, 1 
-            StringTrimRight, CurrSec, CurrSec, 1
-            CurrSec = %CurrSec% 
-            CurrLength := StrLen(CurrSec)  ;to easily trim name off of following comment lines
-            
-            ;add to tree
-            CurrSecID := TV_Add(CurrSec)
-            CurrID = %CurrSecID%
-            %CurrID%Sec := True
-            CurrKey =
-            Continue 
-          } 
-    
-        ;key line 
-        Pos := InStr(CurrLine,"=") 
-        If ( Pos AND CurrSecID ){ 
-            ;extract key name and its value
-            StringLeft, CurrKey, CurrLine, % Pos - 1 
-            StringTrimLeft, CurrVal, CurrLine, %Pos% 
-            CurrKey = %CurrKey%             ;remove whitespaces
-            CurrVal = %CurrVal% 
+    myGui.SetFont("s9 Norm cDefault")
+    myGui.Add("Text", "x45 y48 w480 h20 +Center", HelpTip)
+    myGui.SetFont("s16 Bold", "Verdana")
+    myGui.Add("Text", "x45 y13 w480 h35 +Center", "Settings for " ProgName)
+    myGui.SetFont()
+
+    ; ── Read ini file, build tree, store values ──────────────────────────────
+    CurrSecID := 0, CurrID := 0, CurrKey := "", CurrSec := "", CurrLength := 0
+
+    Loop Read, IniFile {
+        CurrLine       := A_LoopReadLine
+        CurrLineLength := StrLen(CurrLine)
+
+        If (Trim(CurrLine) = "")        ; blank line
+            Continue
+
+        If (SubStr(CurrLine, 1, 1) = ";") {   ; comment / description line
+            chk2 := SubStr(CurrLine, 1, CurrLength + 2)
+            Des  := SubStr(CurrLine, CurrLength + 3)
+
+            If (CurrID && !nodeSec.Get(CurrID, true) && ";" CurrKey " " = chk2) {
+                ; --- key description ---
+                If (SubStr(Des, 1, 6) = "Type: ") {
+                    Typ := Trim(SubStr(Des, 7))
+                    Des := ";" "`n" Des
+                    If (SubStr(Typ, 1, 9) = "DropDown ") {
+                        nodeFor[CurrID] := SubStr(Typ, 10)
+                        Typ := "DropDown", Des := ""
+                    } Else If (SubStr(Typ, 1, 8) = "DateTime") {
+                        Fmt := Trim(SubStr(Typ, 9))
+                        nodeFor[CurrID] := (Fmt = "") ? "dddd MMMM d, yyyy HH:mm:ss tt" : Fmt
+                        Typ := "DateTime", Des := ""
+                    } Else If (Typ = "CheckBox") {
+                        Des := ""
+                    }
+                    nodeTyp[CurrID] := Typ
+                } Else If (SubStr(Des, 1, 9) = "Default: ") {
+                    nodeDef[CurrID] := SubStr(Des, 10), Des := ""
+                } Else If (SubStr(Des, 1, 9) = "Options: ") {
+                    nodeOpt[CurrID] := SubStr(Des, 10), Des := ""
+                } Else If (InStr(Des, "Hidden:") = 1) {
+                    tv.Delete(CurrID), Des := "", CurrID := 0
+                } Else If (SubStr(Des, 1, 14) = "CheckboxName: ") {
+                    nodeChkN[CurrID] := SubStr(Des, 15), Des := ""
+                }
+                If CurrID
+                    nodeDes[CurrID] := nodeDes.Get(CurrID, "") "`n" Des
+
+            } Else If (CurrID && nodeSec.Get(CurrID, false) && ";" CurrSec " " = chk2) {
+                ; --- section description ---
+                If (InStr(Des, "Hidden:") = 1) {
+                    tv.Delete(CurrID), Des := "", CurrSecID := 0
+                }
+                If CurrID
+                    nodeDes[CurrID] := nodeDes.Get(CurrID, "") "`n" Des
+            }
+
+            ; Strip leading newline
+            If (CurrID && SubStr(nodeDes.Get(CurrID, ""), 1, 1) = "`n")
+                nodeDes[CurrID] := SubStr(nodeDes[CurrID], 2)
+            Continue
+        }
+
+        If (SubStr(CurrLine, 1, 1) = "[" && SubStr(CurrLine, CurrLineLength, 1) = "]") {
+            ; section line
+            CurrSec    := Trim(SubStr(CurrLine, 2, CurrLineLength - 2))
+            CurrLength := StrLen(CurrSec)
+            CurrSecID  := tv.Add(CurrSec)
+            CurrID     := CurrSecID
+            nodeSec[CurrID] := true
+            CurrKey := ""
+            Continue
+        }
+
+        Pos := InStr(CurrLine, "=")     ; key = value line
+        If (Pos && CurrSecID) {
+            CurrKey    := Trim(SubStr(CurrLine, 1, Pos - 1))
+            CurrVal    := SubStr(CurrLine, Pos + 1)
             CurrLength := StrLen(CurrKey)
-            
-            ;add to tree and store value
-            CurrID := TV_Add(CurrKey,CurrSecID) 
-            %CurrID%Val := CurrVal
-            %CurrID%Sec := False
-            
-            ;store initial value as default for restore function
-            ;will be overwritten if default is specified later on comment line
-            %CurrID%Def := CurrVal 
-          } 
-      } 
-  
-    ;select first key of first section and expand section
-    TV_Modify(TV_GetChild(TV_GetNext()), "Select")
-  
-    ;show Gui and get UniqueID
-    Gui, Show, w570 h400, %ProgName% Settings
-    Gui, +LastFound
-    GuiID := WinExist() 
-  
-    ;check for changes in GUI 
-    Loop { 
-        ;get current tree selection 
-        CurrID := TV_GetSelection() 
-        
-        If SetDefault { 
-            %CurrID%Val := %CurrID%Def 
-            LastID = 0
-            SetDefault := False
-            ValChanged := True
-          } 
+            CurrID     := tv.Add(CurrKey, CurrSecID)
+            nodeVal[CurrID] := CurrVal
+            nodeSec[CurrID] := false
+            nodeDef[CurrID] := CurrVal   ; initial value is default unless overridden
+        }
+    }
 
-        MouseGetPos,,, AWinID, ACtrl 
-        If ( AWinID = GuiID){ 
-            If ( ACtrl = "Button3")  
-                SB_SetText("Restores Value to default (if specified), else restores it to initial value before change")
-        } Else 
-            SB_SetText("") 
+    ; Pre-select first key of first section
+    tv.Modify(tv.GetChild(tv.GetNext()), "Select")
+    myGui.Show("w570 h400")
+    GuiHwnd := myGui.Hwnd
 
-        ;change GUI content if tree selection changed 
-        If (CurrID <> LastID) {
-            ;remove custom options from last control
-            Loop, Parse, InvertedOptions, %A_Space%
-                GuiControl, %A_Loopfield%, %ControlUsed%
+    ; ── Runtime state ────────────────────────────────────────────────────────
+    LastID          := 0
+    SetDefault      := false
+    ValChanged      := false
+    ControlUsed     := edt1
+    InvertedOptions := ""
+    CurrVal         := ""
+    CurrID          := 0
+    SelSec          := ""
+    SelKey          := ""
+    Typ             := ""
+    done            := false
 
-            ;hide/show browse button depending on key type
-            Typ := %CurrID%Typ 
-            If Typ in File,Folder 
-                GuiControl, Show , Button2, 
-            Else 
-                GuiControl, Hide , Button2, 
+    ; Bind events
+    btnExit.OnEvent("Click",    (*) => done := true)
+    btnBrowse.OnEvent("Click",  BtnBrowseKeyValue)
+    btnDefault.OnEvent("Click", (*) => SetDefault := true)
+    myGui.OnEvent("Close",      (*) => done := true)
+    myGui.OnEvent("Size",       GuiResize)
 
-            ;set the needed value control depending on key type
-            If (Typ = "DateTime")
-                ControlUsed = SysDateTimePick321
-            Else If ( Typ = "Hotkey" )
-                ControlUsed = msctls_hotkey321
-            Else If ( Typ = "DropDown")
-                ControlUsed = ComboBox1
-            Else If ( Typ = "CheckBox")
-                ControlUsed = Button4
-            Else                    ;e.g. Text,File,Folder,Float,Integer or No Tyo (e.g. Section) 
-                ControlUsed = Edit1
-
-            ;hide/show the value controls
-            Controls = SysDateTimePick321,msctls_hotkey321,ComboBox1,Button4,Edit1  
-            Loop, Parse, Controls, `,
-                If ( ControlUsed = A_LoopField )
-                    GuiControl, Show , %A_LoopField%,
-                Else
-                    GuiControl, Hide , %A_LoopField%,
-
-            If ( ControlUsed = "Button4" )
-                GuiControl,  , Button4, % %CurrID%ChkN
-
-            ;get current options
-            CurrOpt := %CurrID%Opt
-            ;apply current custom options to current control and memorize them inverted
-            InvertedOptions =   
-            Loop, Parse, CurrOpt, %A_Space%
-              {
-                ;get actual option name
-                StringLeft, chk, A_LoopField, 1
-                StringTrimLeft, chk2, A_LoopField, 1
-                If chk In +,-
-                  {
-                    GuiControl, %A_LoopField%, %ControlUsed%
-                    If (chk = "+")
-                        InvertedOptions = %InvertedOptions% -%chk2%
-                    Else
-                        InvertedOptions = %InvertedOptions% +%chk2%
-                }Else {
-                    GuiControl, +%A_LoopField%, %ControlUsed%
-                    InvertedOptions = %InvertedOptions% -%A_LoopField%
-                  }
-              }
-
-            If %CurrID%Sec {                      ;section got selected
-                CurrVal =                        
-                GuiControl, , Edit1, 
-                GuiControl, Disable , Edit1, 
-                GuiControl, Disable , Button3, 
-            }Else {                               ;new key got selected
-                CurrVal := %CurrID%Val   ;get current value
-                GuiControl, , Edit1, %CurrVal%   ;put current value in all value controls
-                GuiControl, Text, SysDateTimePick321, % %CurrID%For 
-                GuiControl, , SysDateTimePick321, %CurrVal%
-                GuiControl, , msctls_hotkey321, %CurrVal%
-                GuiControl, , ComboBox1, % "|" %CurrID%For
-                GuiControl, ChooseString, ComboBox1, %CurrVal% 
-                GuiControl, , Button4 , %CurrVal%
-                GuiControl, Enable , Edit1, 
-                GuiControl, Enable , Button3, 
-              } 
-            GuiControl, , Edit2, % %CurrID%Des 
-          }
-        LastID = %CurrID%                   ;remember last selection
-
-        ;sleep to reduce CPU load
-        Sleep, 100 
-
-        ;exit endless loop, when settings GUI closes 
-        If not WinExist("ahk_id" GuiID) 
+    ; ── Main polling loop ────────────────────────────────────────────────────
+    Loop {
+        If done
             Break
 
-        ;if key is selected, get value
-        If (%CurrID%Sec = False){
-            GuiControlGet, NewVal, , %ControlUsed% 
-            ;save key value when it has been changed 
-            If ( NewVal <> CurrVal OR ValChanged ) {
-                ValChanged := False
-                
-                ;consistency check if type is integer or float
-                If (Typ = "Integer")
-                  If NewVal is not space
-                    If NewVal is not Integer
-                      {
-                        GuiControl, , Edit1, %CurrVal%
-                        Continue
-                      }
-                If (Typ = "Float")
-                  If NewVal is not space
-                    If NewVal is not Integer
-                      If (NewVal <> ".")
-                        If NewVal is not Float
-                          {
-                            GuiControl, , Edit1, %CurrVal%
-                            Continue
-                          }
-                
-                ;set new value and save it to INI      
-                %CurrID%Val := NewVal 
-                CurrVal = %NewVal%
-                PrntID := TV_GetParent(CurrID)
-                TV_GetText(SelSec, PrntID) 
-                TV_GetText(SelKey, CurrID) 
-                If (SelSec AND SelKey) 
-                    IniWrite, %NewVal%, %IniFile%, %SelSec%, %SelKey% 
-              } 
-          } 
-      } 
+        CurrID := tv.GetSelection()
 
-    ;Exit button got pressed 
-    ExitSettings: 
-      ;re-enable calling GUI 
-      If DisableGui { 
-          Gui, %OwnedBy%:-Disabled 
-          Gui, %OwnedBy%:,Show 
-        } 
-      Gui, Destroy
+        If SetDefault {
+            nodeVal[CurrID] := nodeDef.Get(CurrID, "")
+            LastID     := 0
+            SetDefault := false
+            ValChanged := true
+        }
 
-    IfNotEqual, HelpText,
-        Hotkey, F1, Off
+        ; Update GUI when tree selection changes
+        If (CurrID != LastID) {
+            ; Undo custom options applied to previous control
+            Loop Parse, InvertedOptions, " " {
+                If (A_LoopField != "")
+                    ControlUsed.Opt(A_LoopField)
+            }
 
-    ;exit function 
-    Return 1
-    
-    ;browse button got pressed
-    BtnBrowseKeyValue: 
-      ;get current value
-      GuiControlGet, StartVal, , Edit1 
-      Gui, +OwnDialogs 
-      
-      ;Select file or folder depending on key type
-      If (Typ = "File"){ 
-          ;get StartFolder
-          IfExist %A_ScriptDir%\%StartVal% 
-              StartFolder = %A_ScriptDir% 
-          Else IfExist %StartVal% 
-              SplitPath, StartVal, , StartFolder 
-          Else 
-              StartFolder = 
+            Typ := nodeTyp.Get(CurrID, "")
 
-          ;select file
-          FileSelectFile, Selected,, %StartFolder%, Select file for %SelSec% - %SelKey%, Any file (*.*) 
-      }Else If (Typ = "Folder"){ 
-          ;get StartFolder
-          IfExist %A_ScriptDir%\%StartVal% 
-              StartFolder = %A_ScriptDir%\%StartVal% 
-          Else IfExist %StartVal% 
-              StartFolder = %StartVal% 
-          Else 
-              StartFolder = 
-          
-          ;select folder
-          FileSelectFolder, Selected, *%StartFolder% , 3, Select folder for %SelSec% - %SelKey% 
-          
-          ;remove last backslash "\" if any
-          StringRight, LastChar, Selected, 1 
-          If LastChar = \ 
-               StringTrimRight, Selected, Selected, 1 
-        } 
-      ;If file or folder got selected, remove A_ScriptDir (since it's redundant) and set it into GUI
-      If Selected { 
-          StringReplace, Selected, Selected, %A_ScriptDir%\ 
-          GuiControl, , Edit1, %Selected% 
-          %CurrID%Val := Selected 
-        } 
-    Return  ;end of browse button subroutine
+            ; Browse button
+            btnBrowse.Visible := (Typ = "File" || Typ = "Folder")
 
-    ;default button got pressed
-    BtnDefaultValue: 
-      SetDefault := True 
-    Return  ;end of default button subroutine
-    
-    ;gui got resized, adjust control sizes
-    GuiIniSettingsEditorSize:
-      GuiIniSettingsEditorAnchor("SysTreeView321"      , "wh") 
-      GuiIniSettingsEditorAnchor("Edit1"               , "x")
-      GuiIniSettingsEditorAnchor("Edit2"               , "xh")
-      GuiIniSettingsEditorAnchor("Button1"             , "xy",true)
-      GuiIniSettingsEditorAnchor("Button2"             , "x",true)
-      GuiIniSettingsEditorAnchor("Button3"             , "xy",true)
-      GuiIniSettingsEditorAnchor("Button4"             , "x",true)
-      GuiIniSettingsEditorAnchor("Button5"             , "wh",true)
-      GuiIniSettingsEditorAnchor("SysDateTimePick321"  , "x")
-      GuiIniSettingsEditorAnchor("msctls_Hotkey321"    , "x")
-      GuiIniSettingsEditorAnchor("ComboBox1"           , "x")
-      GuiIniSettingsEditorAnchor("Static1"             , "x")
-      GuiIniSettingsEditorAnchor("Static2"             , "x")
-      GuiIniSettingsEditorAnchor("Static3"             , "x")
-      GuiIniSettingsEditorAnchor("Static4"             , "x")
-    Return
-    
-    ShowHelp:
-        Gui, %SettingsGuiID%:+OwnDialogs
-        MsgBox, 64, %ProgName% Settings Help, %HelpText%
-    Return
+            ; Choose active value control
+            If (Typ = "DateTime")
+                ControlUsed := dtPicker
+            Else If (Typ = "Hotkey")
+                ControlUsed := hkCtrl
+            Else If (Typ = "DropDown")
+                ControlUsed := ddl
+            Else If (Typ = "CheckBox")
+                ControlUsed := chkBox
+            Else
+                ControlUsed := edt1
 
-  }  ;end of function
+            ; Show only the relevant value control
+            For ctrl in [dtPicker, hkCtrl, ddl, chkBox, edt1]
+                ctrl.Visible := (ctrl == ControlUsed)
 
-GuiIniSettingsEditorAnchor(ctrl, a, draw = false) { ; v3.2 by Titan (shortened)
-    static pos
-    sig = `n%ctrl%=
-    If !InStr(pos, sig) {
-      GuiControlGet, p, Pos, %ctrl%
-      pos := pos . sig . px - A_GuiWidth . "/" . pw  - A_GuiWidth . "/"
-        . py - A_GuiHeight . "/" . ph - A_GuiHeight . "/"
+            If (ControlUsed == chkBox)
+                chkBox.Text := nodeChkN.Get(CurrID, "")
+
+            ; Apply custom options to this control, track inverted options for later removal
+            CurrOpt := nodeOpt.Get(CurrID, "")
+            InvertedOptions := ""
+            Loop Parse, CurrOpt, " " {
+                If (A_LoopField = "")
+                    Continue
+                chk  := SubStr(A_LoopField, 1, 1)
+                chk2 := SubStr(A_LoopField, 2)
+                If (chk = "+" || chk = "-") {
+                    ControlUsed.Opt(A_LoopField)
+                    InvertedOptions .= " " ((chk = "+") ? "-" : "+") chk2
+                } Else {
+                    ControlUsed.Opt("+" A_LoopField)
+                    InvertedOptions .= " -" A_LoopField
+                }
+            }
+
+            If nodeSec.Get(CurrID, false) {
+                ; Section selected — disable value editing
+                CurrVal := ""
+                edt1.Value    := ""
+                edt1.Enabled    := false
+                btnDefault.Enabled := false
+            } Else {
+                ; Key selected — populate all value controls
+                CurrVal := nodeVal.Get(CurrID, "")
+                edt1.Value := CurrVal
+                Try dtPicker.Value := CurrVal
+                Try hkCtrl.Value   := CurrVal
+                ddl.Delete()
+                Items := StrSplit(nodeFor.Get(CurrID, ""), "|")
+                If (Items.Length > 0 && Items[1] != "") {
+                    ddl.Add(Items)
+                    ddl.Choose(CurrVal)
+                }
+                Try chkBox.Value := Integer(CurrVal)
+                edt1.Enabled    := true
+                btnDefault.Enabled := true
+            }
+            Des     := RTrim(nodeDes.Get(CurrID, ""), "`n")
+            DefText := !nodeSec.Get(CurrID, false) ? (Des != "" ? "`n`n" : "") "Default: " nodeDef.Get(CurrID, "") : ""
+            edt2.Value := Des . DefText
+        }
+        LastID := CurrID
+
+        Sleep(100)
+
+        If done || !WinExist("ahk_id " GuiHwnd)
+            Break
+
+        ; Save value if it changed
+        If (CurrID && nodeSec.Get(CurrID, false) = false) {
+            NewVal := (Typ = "DropDown") ? ControlUsed.Text : ControlUsed.Value
+            If (NewVal != CurrVal || ValChanged) {
+                ValChanged := false
+
+                ; Consistency check for Integer type
+                If (Typ = "Integer" && NewVal != "" && !IsInteger(NewVal)) {
+                    edt1.Value := CurrVal
+                    Continue
+                }
+                ; Consistency check for Float type
+                If (Typ = "Float" && NewVal != "" && NewVal != "."
+                        && !IsFloat(NewVal) && !IsInteger(NewVal)) {
+                    edt1.Value := CurrVal
+                    Continue
+                }
+
+                nodeVal[CurrID] := NewVal
+                CurrVal := NewVal
+                PrntID := tv.GetParent(CurrID)
+                SelSec := tv.GetText(PrntID)
+                SelKey := tv.GetText(CurrID)
+                If (SelSec && SelKey)
+                    IniWrite(NewVal, IniFile, SelSec, SelKey)
+            }
+        }
     }
-    StringTrimLeft, p, pos, InStr(pos, sig) - 1 + StrLen(sig)
-    StringSplit, p, p, /
-    c = xwyh
-    Loop, Parse, c
-      If InStr(a, A_LoopField) {
-        If A_Index < 3
-          e := p%A_Index% + A_GuiWidth
-        Else e := p%A_Index% + A_GuiHeight
-        m = %m%%A_LoopField%%e%
-      }
-    If draw
-      d = Draw
-    GuiControl, Move%d%, %ctrl%, %m%
-  }
+
+    ; ── Cleanup ──────────────────────────────────────────────────────────────
+    If (DisableGui && OwnedBy) {
+        OwnedBy.Opt("-Disabled")
+        OwnedBy.Show()
+    }
+    If WinExist("ahk_id " GuiHwnd)
+        myGui.Destroy()
+    If (HelpText != "") {
+        HotIf(() => WinActive(ProgName " Settings"))
+        Hotkey("F1", "Off")
+        HotIf()
+    }
+
+    Return 1
+
+    ; ── Nested event handlers ────────────────────────────────────────────────
+
+    BtnBrowseKeyValue(*) {
+        StartVal := edt1.Value
+        myGui.Opt("+OwnDialogs")
+        Selected := ""
+
+        If (Typ = "File") {
+            StartFolder := ""
+            If FileExist(A_ScriptDir "\" StartVal)
+                StartFolder := A_ScriptDir
+            Else If FileExist(StartVal)
+                SplitPath(StartVal,, &StartFolder)
+            Selected := FileSelect(, StartFolder,
+                "Select file for " SelSec " - " SelKey, "Any file (*.*)")
+
+        } Else If (Typ = "Folder") {
+            StartFolder := ""
+            If FileExist(A_ScriptDir "\" StartVal)
+                StartFolder := A_ScriptDir "\" StartVal
+            Else If FileExist(StartVal)
+                StartFolder := StartVal
+            Selected := DirSelect("*" StartFolder, 3,
+                "Select folder for " SelSec " - " SelKey)
+            If (SubStr(Selected, -1) = "\")
+                Selected := SubStr(Selected, 1, -1)
+        }
+
+        If (Selected != "") {
+            Selected := StrReplace(Selected, A_ScriptDir "\")
+            edt1.Value      := Selected
+            nodeVal[CurrID] := Selected
+        }
+    }
+
+    GuiResize(thisGui, MinMax, Width, Height) {
+        If (MinMax = -1)    ; minimized — skip
+            Return
+        ; Reposition/resize key controls to follow window edges
+        tv.Move(,, 180, Height - 158)
+        edt2.Move(,, Width - 230, Height - 280)
+        edt1.Move(,, Width - 230)
+        dtPicker.Move(,, Width - 230)
+        hkCtrl.Move(,, Width - 230)
+        ddl.Move(,, Width - 230)
+        chkBox.Move(,, Width - 230)
+        btnExit.Move(Width // 2 - 35, Height - 65)
+        btnDefault.Move(, Height - 106)
+        btnBrowse.Move(Width - 65)
+    }
+
+    ShowHelp(*) {
+        myGui.Opt("+OwnDialogs")
+        MsgBox(HelpText, ProgName " Settings Help", 64)
+    }
+
+    SetEditMargins(hwnd, left, right) {
+        EM_SETMARGINS := 0xD3
+        EC_LEFTMARGIN := 0x1
+        EC_RIGHTMARGIN := 0x2
+        if (left != "")
+            SendMessage(EM_SETMARGINS, EC_LEFTMARGIN, left, , "ahk_id " hwnd)
+        if (right != "")
+            SendMessage(EM_SETMARGINS, EC_RIGHTMARGIN, right << 16, , "ahk_id " hwnd)
+    }
+}

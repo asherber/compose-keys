@@ -1,0 +1,140 @@
+/* Simple, GitHub-README-style layout */
+
+:root {
+  --text-color: #1f2328;
+  --muted-color: #59636e;
+  --bg-color: #ffffff;
+  --border-color: #d1d9e0b3;
+  --code-bg: #818b981f;
+  --blockquote-border: #d1d9e0;
+  --link-color: #0969da;
+  --table-header-bg: #f6f8fa;
+  --table-stripe-bg: #f6f8fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px 16px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
+    Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+  line-height: 1.25;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.3em;
+  margin-top: 1.5em;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 2em;
+  margin-top: 0;
+}
+
+h2 {
+  font-size: 1.5em;
+}
+
+h3 {
+  font-size: 1.25em;
+}
+
+p, ul, ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+ul, ol {
+  padding-left: 2em;
+}
+
+li {
+  margin-bottom: 4px;
+}
+
+blockquote {
+  margin: 0 0 16px 0;
+  padding: 0 1em;
+  color: var(--muted-color);
+  border-left: 0.25em solid var(--blockquote-border);
+}
+
+blockquote p {
+  margin-bottom: 8px;
+}
+
+code {
+  background: var(--code-bg);
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 0.9em;
+}
+
+/* Table: horizontally scrollable on small screens */
+table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+th, td {
+  border: 1px solid var(--border-color);
+  padding: 6px 13px;
+  text-align: left;
+}
+
+th {
+  background: var(--table-header-bg);
+  font-weight: 600;
+}
+
+tr:nth-child(2n) {
+  background: var(--table-stripe-bg);
+}
+
+hr {
+  height: 1px;
+  border: none;
+  background-color: var(--border-color);
+  margin: 24px 0;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 16px 12px;
+    font-size: 15px;
+  }
+
+  th, td {
+    padding: 5px 8px;
+  }
+}

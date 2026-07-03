@@ -1,0 +1,48 @@
+name: Build and Release
+
+on:
+  push:
+    tags: [ v*.*.* ]
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    env:
+      EXE_NAME: compose-keys.exe
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Compile compose.ahk
+        uses: benmusson/ahk2exe-action@v1
+        with:
+          in: .\compose.ahk
+          out: .\build\${{ env.EXE_NAME }}
+          target: x64
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract release notes from commit message
+        id: notes
+        shell: pwsh
+        run: |
+          $lines = git log -1 --pretty=%B
+          if ($lines.Count -gt 2) {
+            $body = ($lines[2..($lines.Count - 1)] -join "`n")
+          } else {
+            $body = ""
+          }
+
+          "body<<EOF" >> $env:GITHUB_OUTPUT
+          $body >> $env:GITHUB_OUTPUT
+          "EOF" >> $env:GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          body: ${{ steps.notes.outputs.body }}
+          files: build/${{ env.EXE_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compose Keys</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <h1 id="compose-keys">Compose Keys</h1>
+      <p>
+        <strong>compose-keys</strong> mimics the functionality of the
+        &quot;Compose&quot; key on Linux computers, and allows you to type
+        accented letters and special symbols by pressing a modifier key followed
+        by intuitive 2-letter combinations.
+      </p>
+      <h2 id="how-to-use">How To Use</h2>
+      <p>
+        Press and <strong>release</strong> the modifier key, then type any of
+        the <a href="keytable.html">2-character sequences</a> to obtain the
+        accent or symbol you need.
+      </p>
+      <p>
+        By default, the modifier is the [ <strong>Right Ctrl</strong> ] key, but
+        it can easily be changed in the Settings dialog.
+      </p>
+      <p><strong>Example:</strong></p>
+      <p>
+        To obtain [ <strong>á</strong> ] you would press [
+        <strong>Right Ctrl</strong> ] then [ <strong>&#39;</strong> ] then [
+        <strong>a</strong> ]. The order is important!
+      </p>
+      <ul>
+        <li>
+          Generally for accented letters the key sequence is:
+          <strong>modifier &rarr; accent &rarr; letter</strong>
+        </li>
+        <li>
+          For symbols it varies according to the list in the link above. The 2
+          characters chosen are <em>usually</em> quite logical and easy to
+          learn.
+        </li>
+      </ul>
+      <h2 id="settings">Settings</h2>
+      <p>
+        Using the tray icon menu (right click) you can access this help file,
+        and the configuration file, where the following can be changed:
+      </p>
+      <ol start="">
+        <li>
+          <strong>SoundOnReset</strong> : plays a small blip sound to tell you
+          that the modifier key has been reset (by pressing it twice)
+        </li>
+        <li>
+          <strong>ModifierKey</strong> : which key should be used as a modifier,
+          e.g., Caps Lock, Right Alt, Left Alt, Right Ctrl, Left Ctrl, Right
+          Shift, Left Shift, etc.
+        </li>
+        <li>
+          <strong>UseCapsLock</strong> : Also use the CapsLock key as a
+          modifier. The normal CapsLock function can be accessed via
+          Shift+CapsLock or Ctrl+CapsLock.
+        </li>
+        <li>
+          <strong>ResetDelay</strong> : delay (in milliseconds: 1000 = 1 sec)
+          before the modifier key is reset, to prevent unwanted key
+          compositions. Default = 2000ms
+        </li>
+      </ol>
+      <h2 id="source">Source Code</h2>
+      <p>
+        The source code for this project is available on
+        <a href="https://github.com/asherber/compose-keys">GitHub</a>.
+      </p>
+    </main>
+  </body>
+</html>
