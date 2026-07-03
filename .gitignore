@@ -1,0 +1,8 @@
+# Ignore everything
+*
+!.gitignore
+
+# Un-ignore to publish
+!help.html
+!keytable.html
+!style.css
