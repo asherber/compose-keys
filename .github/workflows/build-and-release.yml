@@ -1,0 +1,71 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    env:
+      EXE_NAME: compose-keys.exe
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compile compose.ahk
+        uses: nukdokplex/autohotkey-build@v1
+        with:
+          in: compose.ahk          
+
+      - name: Read version from compiled exe
+        id: version
+        shell: pwsh
+        run: |
+          $exe = "build/$($env:EXE_NAME)"
+          if (-not (Test-Path $exe)) {
+            Write-Error "Compiled exe not found at $exe"
+            exit 1
+          }
+
+          $info = (Get-Item $exe).VersionInfo
+          $version = $info.FileVersion
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            $version = $info.ProductVersion
+          }
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Error "No version info embedded in $exe. Add a ';@Ahk2Exe-SetVersion' directive to compose.ahk."
+            exit 1
+          }
+
+          $version = $version.Trim()
+          Write-Host "Detected version: $version"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Extract release notes from commit message
+        id: notes
+        shell: pwsh
+        run: |
+          $lines = git log -1 --pretty=%B
+          if ($lines.Count -gt 2) {
+            $body = ($lines[2..($lines.Count - 1)] -join "`n")
+          } else {
+            $body = ""
+          }
+
+          "body<<EOF" >> $env:GITHUB_OUTPUT
+          $body >> $env:GITHUB_OUTPUT
+          "EOF" >> $env:GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: ${{ steps.notes.outputs.body }}
+          files: build/${{ env.EXE_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
