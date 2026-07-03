@@ -44,7 +44,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     sb         := myGui.Add("StatusBar")
     tv         := myGui.Add("TreeView",     "x16 y75 w180 h242 0x400")
     edt1       := myGui.Add("Edit",         "x215 y114 w340 h20")
-    edt2       := myGui.Add("Edit",         "x215 y174 w340 h120 ReadOnly")
+    edt2       := myGui.Add("Edit",         "x215 y174 w340 h120 ReadOnly -VScroll")
     btnExit    := myGui.Add("Button",       "x250 y335 w70 h30",  "E&xit")
     btnBrowse  := myGui.Add("Button",       "x505 y88 Hidden",    "B&rowse")
     btnDefault := myGui.Add("Button",       "x215 y294",          "&Restore")
