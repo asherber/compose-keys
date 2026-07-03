@@ -6,7 +6,7 @@
 ;@Ahk2Exe-ExeName compose-keys
 ;@Ahk2Exe-SetCopyright ©2026
 ;@Ahk2Exe-SetDescription Compose Keys
-;@Ahk2Exe-SetVersion  2.0.1
+;@Ahk2Exe-SetVersion  2.0.2
 
 
 AssetDir := A_IsCompiled ? A_AppData . "\ComposeKeys" : A_ScriptDir
