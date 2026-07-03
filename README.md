@@ -32,9 +32,12 @@ Settings
 Using the tray icon menu (right click) you can access this help file, and the configuration file, where the following can be changed:
 
 1. **SoundOnReset** : plays a small blip sound to tell you that the modifier key has been reset (by pressing it twice)
-
 2. **ModifierKey** : which key should be used as a modifier, e.g., Caps Lock, Right Alt, Left Alt, Right Ctrl, Left Ctrl, Right Shift, Left Shift, etc. 
-
 3. **UseCapsLock** : Also use the CapsLock key as a modifier.  The normal CapsLock function can be accessed via Shift+CapsLock or Ctrl+CapsLock.
-
 4. **ResetDelay** : delay (in milliseconds: 1000 = 1 sec) before the modifier key is reset, to prevent unwanted key compositions.  Default = 2000ms
+
+## License
+
+The modifications and updates in this fork are licensed under the MIT License.
+
+Please note that the original base code was published without an explicit license and remains under the copyright of the original author.
