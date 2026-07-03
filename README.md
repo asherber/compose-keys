@@ -15,7 +15,7 @@ An icon for **compose-keys** will appear in your system tray, Right-click to acc
 How To Use
 ----------
 
-Press and **release** the modifier key, then type any of the [2-character sequences](//raw.githubusercontent.com/asherber/compose-keys/HEAD/keytable.html) to obtain the accent or symbol you need.
+Press and **release** the modifier key, then type any of the [2-character sequences](//asherber.github.io/compose-keys/keytable.html) to obtain the accent or symbol you need.
 
 By default, the modifier is the [ **Right Ctrl** ] key, but it can easily be changed in the Settings dialog.
 
