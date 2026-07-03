@@ -29,24 +29,10 @@ TraySetIcon(AssetDir "\compose.ico")
 
 disabled := false
 
-; User settings
-SoundOnReset := IniRead(AssetDir "\config.ini", "Settings", "SoundOnReset")
-ModifierKey   := IniRead(AssetDir "\config.ini", "Settings", "ModifierKey")
-UseCapsLock   := IniRead(AssetDir "\config.ini", "Settings", "UseCapsLock")
-ResetDelay    := IniRead(AssetDir "\config.ini", "Settings", "ResetDelay")
+ReadIni()
 
 ; Allows user to easily edit the settings
 #Include ini-editor.ahk
-
-; Convert the 'human' key name to an AHK approved version!
-key_map := {RAlt: "Right Alt", LAlt: "Left Alt", RControl: "Right Ctrl", RWin: "Right Winkey", LWin: "Left Winkey", Esc: "Escape", Insert: "Insert", Numlock: "Num Lock", Tab: "Tab", None: "None"}
-
-for key, value in key_map.OwnProps() {
-    if (value == ModifierKey) {
-        key_name := key
-        break
-    }
-}
 
 ; Tell the user that compose-keys has loaded, and which modifier is active
 TrayTip("Compose Keys is now running...`nPress [ " ModifierKey " ] to start a new key sequence.", "Compose Keys", 1)
@@ -55,23 +41,22 @@ A_TrayMenu.ClickCount := 2
 A_TrayMenu.Delete()
 
 ; Display the current modifier key at the top of the menu
-A_TrayMenu.Add(ModifierKey, MenuModifierKey)
+A_TrayMenu.Add(ModifierKey, (*) => {})
 A_TrayMenu.Disable(ModifierKey)
-A_TrayMenu.Add("&CapsLock", MenuUseCapsLock)
+A_TrayMenu.Add("&CapsLock", (*) => {})
 A_TrayMenu.Disable("&CapsLock")
-if (UseCapsLock == 1) {
-    A_TrayMenu.Check("&CapsLock")
-}
+SetCapsLockMenuCheck()
+
 A_TrayMenu.Add()
 A_TrayMenu.Add("&Disable", DisableKey)
-A_TrayMenu.Add("&Restart", MenuRestart)
+A_TrayMenu.Add("&Restart", (*) => Reload())
 A_TrayMenu.Add()
 A_TrayMenu.Add("&Settings...", MenuSettings)
-A_TrayMenu.Add("&Help", MenuHelp)
-A_TrayMenu.Add("Compose &Key Table", MenuKeyTable)
+A_TrayMenu.Add("&Help", (*) => Run(AssetDir "\help.html"))
+A_TrayMenu.Add("Compose &Key Table", (*) => Run(AssetDir "\keytable.html"))
 A_TrayMenu.Add()
 A_TrayMenu.Add("&About", MenuAbout)
-A_TrayMenu.Add("E&xit", MenuExit)
+A_TrayMenu.Add("E&xit", (*) => ExitApp())
 
 A_TrayMenu.Default := "&Settings..."
 A_IconTip := "Compose Keys : right-click for options."
@@ -80,14 +65,6 @@ TraySetIcon(AssetDir "\compose.ico")
 ; This is where the real action is!
 ; Loads all the compose key combinations and the cp() function.
 #Include hotstring.ahk
-
-MenuModifierKey(*) {
-    ; Void — item is disabled, only shown for info
-}
-
-MenuUseCapsLock(*) {
-    ; Void — item is disabled, only shown for info
-}
 
 DisableKey(*) {
     global disabled
@@ -103,16 +80,11 @@ DisableKey(*) {
     }
 }
 
-MenuRestart(*) {
-    Reload()
-}
-
 MenuSettings(*) {
     IniSettingsEditor("Compose", AssetDir "\config.ini")
-}
-
-MenuHelp(*) {
-    Run(AssetDir "\help.html")
+    ReadIni()
+    A_TrayMenu.Rename("1&", ModifierKey)
+    SetCapsLockMenuCheck()
 }
 
 MenuAbout(*) {
@@ -124,10 +96,50 @@ MenuAbout(*) {
     MsgBox(Format("{}`n`nby {}`n`n{}", AppName, Symon, Aaron), "Compose Key", 64)
 }
 
-MenuExit(*) {
-    ExitApp()
+
+; User settings
+ReadIni(*) {
+    old_key := IsSet(ModifierKey) ? GetAhkKeyName(ModifierKey) : ""
+    
+    global SoundOnReset  := IniRead(AssetDir "\config.ini", "Settings", "SoundOnReset")
+    global ModifierKey   := IniRead(AssetDir "\config.ini", "Settings", "ModifierKey")
+    global UseCapsLock   := IniRead(AssetDir "\config.ini", "Settings", "UseCapsLock")
+    global ResetDelay    := IniRead(AssetDir "\config.ini", "Settings", "ResetDelay")
+
+    new_key := GetAhkKeyName(ModifierKey)
+    UpdateModifierKey(old_key, new_key)
 }
 
-MenuKeyTable(*) {
-    Run(AssetDir "\keytable.html")
+GetAhkKeyName(key_name) {
+    ; Convert the 'human' key name to an AHK approved version
+    key_map := {
+        CapsLock: "CapsLock",
+        RWin: "Right Winkey",
+        LWin: "Left Winkey",
+        RAlt: "Right Alt",
+        LAlt: "Left Alt",
+        RControl: "Right Ctrl",
+        LControl: "Left Ctrl",
+        RShift: "Right Shift",
+        LShift: "Left Shift",
+        Insert: "Insert",
+        Numlock: "Num Lock",
+        Esc: "Escape",
+        Tab: "Tab"
+    }
+
+    for key, value in key_map.OwnProps() {
+        if (value == key_name) {
+            return key
+        }
+    }
 }
+
+SetCapsLockMenuCheck(*) {
+    if (UseCapsLock == 1) {
+        A_TrayMenu.Check("&CapsLock")
+    } else {
+        A_TrayMenu.Uncheck("&CapsLock")
+    }
+}
+

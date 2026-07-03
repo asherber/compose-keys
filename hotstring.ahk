@@ -1,18 +1,21 @@
 ; trigger inside words; replace immediately; case-sensitive; no auto-backspace
 #Hotstring ? * c b0
 
-if (key_name != "None") {
-    ; Capture the modifier key options
-    ; the actual one used to trigger the replacement is defined in the config.ini file
-    Hotkey key_name, ModifierKeyHotkey
+UpdateModifierKey(old_key, new_key) {
+    Try Hotkey old_key, "Off"
+    Hotkey new_key, ModifierKeyHotkey
+
+    if (UseCapsLock || new_key == "CapsLock") {
+        ; Special modifier CapsLock
+        Hotkey "CapsLock", ModifierKeyHotkey
+        Hotkey "+CapsLock", (*) => Send("{CapsLock}")
+    }
+    else {
+        Try Hotkey "CapsLock", "Off"
+        Try Hotkey "+CapsLock", "Off"
+    }
 }
 
-; If no modifier is specified then use Capslock by default
-if (UseCapslock || key_name == "None") {
-    ; Special modifier CapsLock
-    Hotkey "CapsLock", ModifierKeyHotkey
-    Hotkey "+CapsLock", (*) => Send("{CapsLock}")
-}
 
 ModifierKeyHotkey(*) {
     cp("modify")
