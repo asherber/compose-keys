@@ -2,7 +2,7 @@ name: Build and Release
 
 on:
   push:
-    branches: [ develop ]
+    tags: [ v*.*.* ]
 
 jobs:
   build-and-release:
@@ -24,30 +24,6 @@ jobs:
           target: x64
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Read version from compiled exe
-        id: version
-        shell: pwsh
-        run: |
-          $exe = "build/$($env:EXE_NAME)"
-          if (-not (Test-Path $exe)) {
-            Write-Error "Compiled exe not found at $exe"
-            exit 1
-          }
-
-          $info = (Get-Item $exe).VersionInfo
-          $version = $info.FileVersion
-          if ([string]::IsNullOrWhiteSpace($version)) {
-            $version = $info.ProductVersion
-          }
-          if ([string]::IsNullOrWhiteSpace($version)) {
-            Write-Error "No version info embedded in $exe. Add a ';@Ahk2Exe-SetVersion' directive to compose.ahk."
-            exit 1
-          }
-
-          $version = $version.Trim()
-          Write-Host "Detected version: $version"
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-
       - name: Extract release notes from commit message
         id: notes
         shell: pwsh
@@ -66,8 +42,6 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }}
           body: ${{ steps.notes.outputs.body }}
           files: build/${{ env.EXE_NAME }}
         env:
