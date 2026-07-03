@@ -46,3 +46,29 @@ jobs:
           files: build/${{ env.EXE_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-gh-pages:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+
+      - name: Checkout tag content
+        uses: actions/checkout@v7
+        with:
+          path: source
+
+      - name: Sync site files
+        run: cp source/* .
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: Sync site files from ${{ github.ref_name }}
+          branch: gh-pages
