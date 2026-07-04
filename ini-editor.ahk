@@ -20,7 +20,7 @@
 
 IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := "") {
 
-    ; Data storage (replacing v1 pseudo-arrays)
+    ; ── Data storage (replacing v1 pseudo-arrays) ───────────────────────────
     nodeVal  := Map()   ; ItemID -> current value
     nodeDef  := Map()   ; ItemID -> default value
     nodeDes  := Map()   ; ItemID -> description text
@@ -30,8 +30,20 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     nodeChkN := Map()   ; ItemID -> checkbox label
     nodeSec  := Map()   ; ItemID -> true if section, false if key
 
-    ; Create GUI
-    myGui := Gui("+Resize", ProgName " Settings")
+    ; ── Layout constants (kept in sync between initial layout and GuiResize) ──
+    TreeX       := 10
+    TreeW       := 180
+    TreeY       := 75
+    ValueX      := 215
+    ValueW      := 340
+    LabelH      := 18
+    ValueY      := TreeY + LabelH
+    RightMargin := 230   ; controls stretch to (Width - RightMargin)
+    BtnH        := 23
+    BtnW        := 75
+
+    ; ── Create GUI ────────────────────────────────────────────────────────
+    myGui := Gui("-Resize", ProgName " Settings")
 
     If OwnedBy {
         myGui.Opt("+ToolWindow +Owner" OwnedBy.Hwnd)
@@ -40,38 +52,37 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     } Else
         DisableGui := false
 
-    ; Add controls (order matters for ClassNN compatibility)
+    ; ── Add controls (order matters for ClassNN compatibility) ──────────────
     sb         := myGui.Add("StatusBar")
-    tv         := myGui.Add("TreeView",     "x16 y75 w180 h242 0x400")
-    edt1       := myGui.Add("Edit",         "x215 y114 w340 h20")
-    edt2       := myGui.Add("Edit",         "x215 y174 w340 h120 ReadOnly -VScroll")
-    btnExit    := myGui.Add("Button",       "x250 y335 w70 h30",  "E&xit")
-    btnBrowse  := myGui.Add("Button",       "x505 y88 Hidden",    "B&rowse")
-    btnDefault := myGui.Add("Button",       "x215 y294",          "&Restore")
-    dtPicker   := myGui.Add("DateTime",     "x215 y114 w340 h20 Hidden")
-    hkCtrl     := myGui.Add("Hotkey",       "x215 y114 w340 h20 Hidden")
-    ddl        := myGui.Add("DropDownList", "x215 y114 w340 h120 Hidden")
-    chkBox     := myGui.Add("CheckBox",     "x215 y114 w340 h20 Hidden")
-    myGui.Add("GroupBox", "x4 y63 w560 h263")
+    tv         := myGui.Add("TreeView",     Format("x{} y{} w{} h221 0x400", TreeX, TreeY, TreeW))
+    edt1       := myGui.Add("Edit",         Format("x{} y{} w{} h20", ValueX, ValueY, ValueW))
+    edt2       := myGui.Add("Edit",         Format("x{} y{} w{} h115 ReadOnly -VScroll", ValueX, TreeY + 60 + LabelH, ValueW))
+    btnExit    := myGui.Add("Button",       Format("x{} y310 w{} h{}", (ValueX + ValueW - BtnW), BtnW, BtnH),  "E&xit")
+    btnBrowse  := myGui.Add("Button",       Format("x{} y88 w{} h{}", 505, BtnW, BtnH),    "B&rowse")
+    btnDefault := myGui.Add("Button",       Format("x{} y275 w{} h{}", ValueX, 100, BtnH),   "&Restore Default")
+    dtPicker   := myGui.Add("DateTime",     Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
+    hkCtrl     := myGui.Add("Hotkey",       Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
+    ddl        := myGui.Add("DropDownList", Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 120))
+    chkBox     := myGui.Add("CheckBox",     Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
 
     SetEditMargins(edt2.Hwnd, 5, 5)
 
-    myGui.SetFont("Bold")
-    myGui.Add("Text", "x215 y93",  "Value")
-    myGui.Add("Text", "x215 y154", "Description")
+    myGui.SetFont("Bold", "Segoe UI")
+    myGui.Add("Text", Format("x{} y{}", ValueX, TreeY),  "Value")
+    myGui.Add("Text", Format("x{} y{}", ValueX, TreeY + 60), "Description")
 
-    HelpTip := "( All changes are Auto-Saved )"
+    HelpTip := "(All changes are autosaved)"
     If (HelpText != "") {
         HelpTip := "( All changes are Auto-Saved - Press F1 for Help )"
         HotIf(() => WinActive(ProgName " Settings"))
         Hotkey("F1", ShowHelp)
         HotIf()
     }
-    myGui.SetFont("s9 Norm cDefault")
-    myGui.Add("Text", "x45 y48 w480 h20 +Center", HelpTip)
-    myGui.SetFont("s16 Bold", "Verdana")
-    myGui.Add("Text", "x45 y13 w480 h35 +Center", "Settings for " ProgName)
-    myGui.SetFont()
+    myGui.SetFont("s9 Norm cDefault", "Segoe UI")
+    myGui.Add("Text", Format("x{} y35 w{} h20 +Center", 45, 480), HelpTip)
+    myGui.SetFont("s14 Bold", "Segoe UI")
+    myGui.Add("Text", Format("x{} y8 w{} +Center", 45, 480), "Settings for " . ProgName)
+    myGui.SetFont(, "Segoe UI")
 
     ; ── Read ini file, build tree, store values ──────────────────────────────
     CurrSecID := 0, CurrID := 0, CurrKey := "", CurrSec := "", CurrLength := 0
@@ -84,14 +95,14 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
             Continue
 
         If (SubStr(CurrLine, 1, 1) = ";") {   ; comment / description line
-            chk2 := SubStr(CurrLine, 1, CurrLength + 2)
-            Des  := SubStr(CurrLine, CurrLength + 3)
+            LinePrefix := SubStr(CurrLine, 1, CurrLength + 2)
+            Des        := SubStr(CurrLine, CurrLength + 3)
 
-            If (CurrID && !nodeSec.Get(CurrID, true) && ";" CurrKey " " = chk2) {
+            If (CurrID && !nodeSec.Get(CurrID, true) && ";" CurrKey " " = LinePrefix) {
                 ; --- key description ---
                 If (SubStr(Des, 1, 6) = "Type: ") {
                     Typ := Trim(SubStr(Des, 7))
-                    Des := ";" "`n" Des
+                    Des := "`n" Des
                     If (SubStr(Typ, 1, 9) = "DropDown ") {
                         nodeFor[CurrID] := SubStr(Typ, 10)
                         Typ := "DropDown", Des := ""
@@ -115,7 +126,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
                 If CurrID
                     nodeDes[CurrID] := nodeDes.Get(CurrID, "") "`n" Des
 
-            } Else If (CurrID && nodeSec.Get(CurrID, false) && ";" CurrSec " " = chk2) {
+            } Else If (CurrID && nodeSec.Get(CurrID, false) && ";" CurrSec " " = LinePrefix) {
                 ; --- section description ---
                 If (InStr(Des, "Hidden:") = 1) {
                     tv.Delete(CurrID), Des := "", CurrSecID := 0
@@ -155,7 +166,8 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
 
     ; Pre-select first key of first section
     tv.Modify(tv.GetChild(tv.GetNext()), "Select")
-    myGui.Show("w570 h400")
+    sb.SetText("Ready")
+    myGui.Show("w570 h365")
     GuiHwnd := myGui.Hwnd
 
     ; ── Runtime state ────────────────────────────────────────────────────────
@@ -230,11 +242,11 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
             Loop Parse, CurrOpt, " " {
                 If (A_LoopField = "")
                     Continue
-                chk  := SubStr(A_LoopField, 1, 1)
-                chk2 := SubStr(A_LoopField, 2)
-                If (chk = "+" || chk = "-") {
+                OptSign := SubStr(A_LoopField, 1, 1)
+                OptName := SubStr(A_LoopField, 2)
+                If (OptSign = "+" || OptSign = "-") {
                     ControlUsed.Opt(A_LoopField)
-                    InvertedOptions .= " " ((chk = "+") ? "-" : "+") chk2
+                    InvertedOptions .= " " ((OptSign = "+") ? "-" : "+") OptName
                 } Else {
                     ControlUsed.Opt("+" A_LoopField)
                     InvertedOptions .= " -" A_LoopField
@@ -275,7 +287,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
             Break
 
         ; Save value if it changed
-        If (CurrID && nodeSec.Get(CurrID, false) = false) {
+        If (CurrID && !nodeSec.Get(CurrID, false)) {
             NewVal := (Typ = "DropDown") ? ControlUsed.Text : ControlUsed.Value
             If (NewVal != CurrVal || ValChanged) {
                 ValChanged := false
@@ -283,12 +295,14 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
                 ; Consistency check for Integer type
                 If (Typ = "Integer" && NewVal != "" && !IsInteger(NewVal)) {
                     edt1.Value := CurrVal
+                    FlashInvalid("Enter a whole number")
                     Continue
                 }
                 ; Consistency check for Float type
                 If (Typ = "Float" && NewVal != "" && NewVal != "."
                         && !IsFloat(NewVal) && !IsInteger(NewVal)) {
                     edt1.Value := CurrVal
+                    FlashInvalid("Enter a number")
                     Continue
                 }
 
@@ -297,8 +311,10 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
                 PrntID := tv.GetParent(CurrID)
                 SelSec := tv.GetText(PrntID)
                 SelKey := tv.GetText(CurrID)
-                If (SelSec && SelKey)
+                If (SelSec && SelKey) {
                     IniWrite(NewVal, IniFile, SelSec, SelKey)
+                    sb.SetText("Saved " SelSec " › " SelKey)
+                }
             }
         }
     }
@@ -310,6 +326,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     }
     If WinExist("ahk_id " GuiHwnd)
         myGui.Destroy()
+
     If (HelpText != "") {
         HotIf(() => WinActive(ProgName " Settings"))
         Hotkey("F1", "Off")
@@ -357,16 +374,21 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         If (MinMax = -1)    ; minimized — skip
             Return
         ; Reposition/resize key controls to follow window edges
-        tv.Move(,, 180, Height - 158)
-        edt2.Move(,, Width - 230, Height - 280)
-        edt1.Move(,, Width - 230)
-        dtPicker.Move(,, Width - 230)
-        hkCtrl.Move(,, Width - 230)
-        ddl.Move(,, Width - 230)
-        chkBox.Move(,, Width - 230)
+        tv.Move(,, TreeW, Height - 158)
+        edt2.Move(,, Width - RightMargin, Height - 280)
+        edt1.Move(,, Width - RightMargin)
+        dtPicker.Move(,, Width - RightMargin)
+        hkCtrl.Move(,, Width - RightMargin)
+        ddl.Move(,, Width - RightMargin)
+        chkBox.Move(,, Width - RightMargin)
         btnExit.Move(Width // 2 - 35, Height - 65)
         btnDefault.Move(, Height - 106)
         btnBrowse.Move(Width - 65)
+    }
+
+    FlashInvalid(Msg) {
+        ToolTip(Msg, , , 1)
+        SetTimer(() => ToolTip(, , , 1), -1200)
     }
 
     ShowHelp(*) {
@@ -375,12 +397,15 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     }
 
     SetEditMargins(hwnd, left, right) {
-        EM_SETMARGINS := 0xD3
-        EC_LEFTMARGIN := 0x1
+        EM_SETMARGINS  := 0xD3
+        EC_LEFTMARGIN  := 0x1
         EC_RIGHTMARGIN := 0x2
+        ; Gui/GuiControl coordinates are auto-scaled for DPI, but SendMessage
+        ; talks to the control directly and bypasses that, so scale by hand.
+        DpiScale := A_ScreenDPI / 96
         if (left != "")
-            SendMessage(EM_SETMARGINS, EC_LEFTMARGIN, left, , "ahk_id " hwnd)
+            SendMessage(EM_SETMARGINS, EC_LEFTMARGIN, Round(left * DpiScale), , "ahk_id " hwnd)
         if (right != "")
-            SendMessage(EM_SETMARGINS, EC_RIGHTMARGIN, right << 16, , "ahk_id " hwnd)
+            SendMessage(EM_SETMARGINS, EC_RIGHTMARGIN, Round(right * DpiScale) << 16, , "ahk_id " hwnd)
     }
 }

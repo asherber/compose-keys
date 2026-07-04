@@ -87,7 +87,7 @@ ToggleDisabled(*) {
 }
 
 ShowIniEditor(*) {
-    IniSettingsEditor("Compose", AssetDir "\config.ini")
+    IniSettingsEditor("Compose Keys", AssetDir "\config.ini")
     ReadIni()
     A_TrayMenu.Rename("1&", ModifierKey)
     SetCapsLockMenuChecked()
