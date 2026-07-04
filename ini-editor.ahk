@@ -171,9 +171,6 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     GuiHwnd := myGui.Hwnd
 
     ; ── Runtime state ────────────────────────────────────────────────────────
-    LastID          := 0
-    SetDefault      := false
-    ValChanged      := false
     ControlUsed     := edt1
     InvertedOptions := ""
     CurrVal         := ""
@@ -181,143 +178,28 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     SelSec          := ""
     SelKey          := ""
     Typ             := ""
-    done            := false
+    Populating      := false   ; true while code (not the user) is writing to a control
 
-    ; Bind events
-    btnExit.OnEvent("Click",    (*) => done := true)
+    ; Bind events — the GUI now reacts to notifications instead of being polled
+    btnExit.OnEvent("Click",    CloseEditor)
     btnBrowse.OnEvent("Click",  BtnBrowseKeyValue)
-    btnDefault.OnEvent("Click", (*) => SetDefault := true)
-    myGui.OnEvent("Close",      (*) => done := true)
+    btnDefault.OnEvent("Click", RestoreDefault)
+    myGui.OnEvent("Close",      CloseEditor)
     myGui.OnEvent("Size",       GuiResize)
+    tv.OnEvent("ItemSelect",    TreeSelectionChanged)
 
-    ; ── Main polling loop ────────────────────────────────────────────────────
-    Loop {
-        If done
-            Break
+    edt1.OnEvent("Change",      EditValueChanged)      ; debounced (fires per keystroke)
+    dtPicker.OnEvent("Change",  (*) => CommitValue(dtPicker.Value))
+    hkCtrl.OnEvent("Change",    (*) => CommitValue(hkCtrl.Value))
+    ddl.OnEvent("Change",       (*) => CommitValue(ddl.Text))
+    chkBox.OnEvent("Click",     (*) => CommitValue(chkBox.Value))
 
-        CurrID := tv.GetSelection()
-
-        If SetDefault {
-            nodeVal[CurrID] := nodeDef.Get(CurrID, "")
-            LastID     := 0
-            SetDefault := false
-            ValChanged := true
-        }
-
-        ; Update GUI when tree selection changes
-        If (CurrID != LastID) {
-            ; Undo custom options applied to previous control
-            Loop Parse, InvertedOptions, " " {
-                If (A_LoopField != "")
-                    ControlUsed.Opt(A_LoopField)
-            }
-
-            Typ := nodeTyp.Get(CurrID, "")
-
-            ; Browse button
-            btnBrowse.Visible := (Typ = "File" || Typ = "Folder")
-
-            ; Choose active value control
-            If (Typ = "DateTime")
-                ControlUsed := dtPicker
-            Else If (Typ = "Hotkey")
-                ControlUsed := hkCtrl
-            Else If (Typ = "DropDown")
-                ControlUsed := ddl
-            Else If (Typ = "CheckBox")
-                ControlUsed := chkBox
-            Else
-                ControlUsed := edt1
-
-            ; Show only the relevant value control
-            For ctrl in [dtPicker, hkCtrl, ddl, chkBox, edt1]
-                ctrl.Visible := (ctrl == ControlUsed)
-
-            If (ControlUsed == chkBox)
-                chkBox.Text := nodeChkN.Get(CurrID, "")
-
-            ; Apply custom options to this control, track inverted options for later removal
-            CurrOpt := nodeOpt.Get(CurrID, "")
-            InvertedOptions := ""
-            Loop Parse, CurrOpt, " " {
-                If (A_LoopField = "")
-                    Continue
-                OptSign := SubStr(A_LoopField, 1, 1)
-                OptName := SubStr(A_LoopField, 2)
-                If (OptSign = "+" || OptSign = "-") {
-                    ControlUsed.Opt(A_LoopField)
-                    InvertedOptions .= " " ((OptSign = "+") ? "-" : "+") OptName
-                } Else {
-                    ControlUsed.Opt("+" A_LoopField)
-                    InvertedOptions .= " -" A_LoopField
-                }
-            }
-
-            If nodeSec.Get(CurrID, false) {
-                ; Section selected — disable value editing
-                CurrVal := ""
-                edt1.Value    := ""
-                edt1.Enabled    := false
-                btnDefault.Enabled := false
-            } Else {
-                ; Key selected — populate all value controls
-                CurrVal := nodeVal.Get(CurrID, "")
-                edt1.Value := CurrVal
-                Try dtPicker.Value := CurrVal
-                Try hkCtrl.Value   := CurrVal
-                ddl.Delete()
-                Items := StrSplit(nodeFor.Get(CurrID, ""), "|")
-                If (Items.Length > 0 && Items[1] != "") {
-                    ddl.Add(Items)
-                    ddl.Choose(CurrVal)
-                }
-                Try chkBox.Value := Integer(CurrVal)
-                edt1.Enabled    := true
-                btnDefault.Enabled := true
-            }
-            Des     := RTrim(nodeDes.Get(CurrID, ""), "`n")
-            DefText := !nodeSec.Get(CurrID, false) ? (Des != "" ? "`n`n" : "") "Default: " nodeDef.Get(CurrID, "") : ""
-            edt2.Value := Des . DefText
-        }
-        LastID := CurrID
-
-        Sleep(100)
-
-        If done || !WinExist("ahk_id " GuiHwnd)
-            Break
-
-        ; Save value if it changed
-        If (CurrID && !nodeSec.Get(CurrID, false)) {
-            NewVal := (Typ = "DropDown") ? ControlUsed.Text : ControlUsed.Value
-            If (NewVal != CurrVal || ValChanged) {
-                ValChanged := false
-
-                ; Consistency check for Integer type
-                If (Typ = "Integer" && NewVal != "" && !IsInteger(NewVal)) {
-                    edt1.Value := CurrVal
-                    FlashInvalid("Enter a whole number")
-                    Continue
-                }
-                ; Consistency check for Float type
-                If (Typ = "Float" && NewVal != "" && NewVal != "."
-                        && !IsFloat(NewVal) && !IsInteger(NewVal)) {
-                    edt1.Value := CurrVal
-                    FlashInvalid("Enter a number")
-                    Continue
-                }
-
-                nodeVal[CurrID] := NewVal
-                CurrVal := NewVal
-                PrntID := tv.GetParent(CurrID)
-                SelSec := tv.GetText(PrntID)
-                SelKey := tv.GetText(CurrID)
-                If (SelSec && SelKey) {
-                    IniWrite(NewVal, IniFile, SelSec, SelKey)
-                    sb.SetText("Saved " SelSec " › " SelKey)
-                }
-            }
-        }
-    }
+    ; Populate the panel for the item pre-selected above, then block until closed.
+    ; No manual Sleep/poll loop is needed: WinWaitClose blocks efficiently on the
+    ; OS message queue and returns the instant the window is destroyed or hidden,
+    ; whether that happens via the Exit button, Alt+F4, or the title-bar X.
+    RefreshDisplay(tv.GetSelection())
+    WinWaitClose("ahk_id " GuiHwnd)
 
     ; ── Cleanup ──────────────────────────────────────────────────────────────
     If (DisableGui && OwnedBy) {
@@ -336,6 +218,169 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     Return 1
 
     ; ── Nested event handlers ────────────────────────────────────────────────
+
+    TreeSelectionChanged(*) {
+        ; Fires only on a genuine selection change (mouse or keyboard), so no
+        ; "did the ID change?" bookkeeping is needed here anymore.
+        Id := tv.GetSelection()
+        If Id
+            RefreshDisplay(Id)
+    }
+
+    RefreshDisplay(id) {
+        ; Repaint the value/description panel for the given tree item.
+        ; Wrapped in Populating so that programmatically setting control
+        ; values below doesn't loop back around and trigger CommitValue.
+        Populating := true
+
+        ; Undo custom options applied to the previously active control
+        Loop Parse, InvertedOptions, " " {
+            If (A_LoopField != "")
+                ControlUsed.Opt(A_LoopField)
+        }
+
+        CurrID := id
+        Typ    := nodeTyp.Get(CurrID, "")
+
+        ; Browse button
+        btnBrowse.Visible := (Typ = "File" || Typ = "Folder")
+
+        ; Choose active value control
+        If (Typ = "DateTime")
+            ControlUsed := dtPicker
+        Else If (Typ = "Hotkey")
+            ControlUsed := hkCtrl
+        Else If (Typ = "DropDown")
+            ControlUsed := ddl
+        Else If (Typ = "CheckBox")
+            ControlUsed := chkBox
+        Else
+            ControlUsed := edt1
+
+        ; Show only the relevant value control
+        For ctrl in [dtPicker, hkCtrl, ddl, chkBox, edt1]
+            ctrl.Visible := (ctrl == ControlUsed)
+
+        If (ControlUsed == chkBox)
+            chkBox.Text := nodeChkN.Get(CurrID, "")
+
+        ; Apply custom options to this control, track inverted options for later removal
+        CurrOpt := nodeOpt.Get(CurrID, "")
+        InvertedOptions := ""
+        Loop Parse, CurrOpt, " " {
+            If (A_LoopField = "")
+                Continue
+            OptSign := SubStr(A_LoopField, 1, 1)
+            OptName := SubStr(A_LoopField, 2)
+            If (OptSign = "+" || OptSign = "-") {
+                ControlUsed.Opt(A_LoopField)
+                InvertedOptions .= " " ((OptSign = "+") ? "-" : "+") OptName
+            } Else {
+                ControlUsed.Opt("+" A_LoopField)
+                InvertedOptions .= " -" A_LoopField
+            }
+        }
+
+        If nodeSec.Get(CurrID, false) {
+            ; Section selected — disable value editing
+            CurrVal := ""
+            edt1.Value    := ""
+            edt1.Enabled    := false
+            btnDefault.Enabled := false
+        } Else {
+            ; Key selected — populate all value controls
+            CurrVal := nodeVal.Get(CurrID, "")
+            edt1.Value := CurrVal
+            Try dtPicker.Value := CurrVal
+            Try hkCtrl.Value   := CurrVal
+            ddl.Delete()
+            Items := StrSplit(nodeFor.Get(CurrID, ""), "|")
+            If (Items.Length > 0 && Items[1] != "") {
+                ddl.Add(Items)
+                ddl.Choose(CurrVal)
+            }
+            Try chkBox.Value := Integer(CurrVal)
+            edt1.Enabled    := true
+            btnDefault.Enabled := true
+        }
+        Des     := RTrim(nodeDes.Get(CurrID, ""), "`n")
+        DefText := !nodeSec.Get(CurrID, false) ? (Des != "" ? "`n`n" : "") "Default: " nodeDef.Get(CurrID, "") : ""
+        edt2.Value := Des . DefText
+
+        Populating := false
+    }
+
+    EditValueChanged(*) {
+        ; Debounce free-text typing: each keystroke restarts a one-shot timer
+        ; instead of writing the ini file on every character.
+        If Populating
+            Return
+        SetTimer(CommitEditValue, -400)
+    }
+
+    CommitEditValue() {
+        CommitValue(edt1.Value)
+    }
+
+    CommitValue(NewVal) {
+        ; Shared save path for every value control's Change/Click event.
+        If (Populating || !CurrID || nodeSec.Get(CurrID, false))
+            Return
+        If (NewVal = CurrVal)
+            Return
+
+        ; Consistency check for Integer type
+        If (Typ = "Integer" && NewVal != "" && !IsInteger(NewVal)) {
+            Populating := true
+            edt1.Value := CurrVal
+            Populating := false
+            FlashInvalid("Enter a whole number")
+            Return
+        }
+        ; Consistency check for Float type
+        If (Typ = "Float" && NewVal != "" && NewVal != "."
+                && !IsFloat(NewVal) && !IsInteger(NewVal)) {
+            Populating := true
+            edt1.Value := CurrVal
+            Populating := false
+            FlashInvalid("Enter a number")
+            Return
+        }
+
+        nodeVal[CurrID] := NewVal
+        CurrVal := NewVal
+        PrntID := tv.GetParent(CurrID)
+        SelSec := tv.GetText(PrntID)
+        SelKey := tv.GetText(CurrID)
+        If (SelSec && SelKey) {
+            IniWrite(NewVal, IniFile, SelSec, SelKey)
+            sb.SetText("Saved " SelSec " › " SelKey)
+        }
+    }
+
+    RestoreDefault(*) {
+        If (!CurrID || nodeSec.Get(CurrID, false))
+            Return
+        DefVal := nodeDef.Get(CurrID, "")
+        nodeVal[CurrID] := DefVal
+        RefreshDisplay(CurrID)   ; repaints controls with the default value
+
+        PrntID := tv.GetParent(CurrID)
+        SelSec := tv.GetText(PrntID)
+        SelKey := tv.GetText(CurrID)
+        If (SelSec && SelKey) {
+            IniWrite(DefVal, IniFile, SelSec, SelKey)
+            sb.SetText("Restored default for " SelSec " › " SelKey)
+        }
+    }
+
+    CloseEditor(*) {
+        ; Shared by the Exit button and the window's Close event. Explicitly
+        ; destroying here (rather than just flipping a flag) is what lets
+        ; WinWaitClose unblock — a bare Close event only hides the window.
+        If WinExist("ahk_id " GuiHwnd)
+            myGui.Destroy()
+    }
 
     BtnBrowseKeyValue(*) {
         StartVal := edt1.Value
