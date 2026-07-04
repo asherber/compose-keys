@@ -1,7 +1,7 @@
-; trigger inside words; replace immediately; case-sensitive; no auto-backspace; execute function
+; Trigger inside words; replace immediately; case-sensitive; no auto-backspace; execute function
 #Hotstring ? * c b0 x
-
-modify := false
+; Global state
+Modify := false
 
 UpdateModifierKey(old_key, new_key) {
     Try Hotkey old_key, "Off"
@@ -19,12 +19,12 @@ UpdateModifierKey(old_key, new_key) {
 }
 
 ModifierKeyFunction(*) {
-    if (disabled) {
+    if (Disabled) {
         return
     }
 
-    if (!modify) {
-        SetTimer () => modify := false, -ResetDelay    ; reset after a short period to avoid unwanted compose keys
+    if (!Modify) {
+        SetTimer () => Modify := false, -ResetDelay    ; reset after a short period to avoid unwanted compose keys
     } else {
         ; pressing the modifier twice will reset it
         if (SoundOnReset = 1) {
@@ -32,19 +32,20 @@ ModifierKeyFunction(*) {
         }
     }
     
-    global modify := !modify
+    global Modify := !Modify
 }
-
 
 ; Main list of character replacements, adapt to your needs
 ; they consist of 2-character triggers, followed by a call to the cp() function with the replacement character
 #Include keys.ahk
 LoadCustomFile(AssetDir "\customkeys.txt")   
 
+
+
 ; The main Compose function
 cp(char) {
-    if (modify) {
-        global modify := false
+    if (Modify) {
+        global Modify := false
         length := StrLen(A_ThisHotkey) - InStr(A_ThisHotkey, ":", false, 1, 2)   ; length of the trigger, minus the two colon    
         Send "{BackSpace " length "}"
         Send char

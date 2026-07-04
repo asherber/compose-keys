@@ -6,9 +6,10 @@
 ;@Ahk2Exe-ExeName compose-keys
 ;@Ahk2Exe-SetCopyright ©2026
 ;@Ahk2Exe-SetDescription Compose Keys
-;@Ahk2Exe-SetVersion  2.0.3
+;@Ahk2Exe-SetVersion 2.1.1
 
 
+; Local assets
 AssetDir := A_IsCompiled ? A_AppData . "\ComposeKeys" : A_ScriptDir
 if A_IsCompiled
 {
@@ -25,17 +26,10 @@ if !FileExist(AssetDir "\config.ini")
     FileInstall("config.ini", AssetDir "\config.ini", 1)
 }
 
+; UI
 TraySetIcon(AssetDir "\compose.ico")
 
-disabled := false
-
 ReadIni()
-
-; Allows user to easily edit the settings
-#Include ini-editor.ahk
-
-; Tell the user that compose-keys has loaded, and which modifier is active
-TrayTip("Compose Keys is now running...`nPress [ " ModifierKey " ] to start a new key sequence.", "Compose Keys", 1)
 
 A_TrayMenu.ClickCount := 2
 A_TrayMenu.Delete()
@@ -43,51 +37,63 @@ A_TrayMenu.Delete()
 ; Display the current modifier key at the top of the menu
 A_TrayMenu.Add(ModifierKey, (*) => {})
 A_TrayMenu.Disable(ModifierKey)
-A_TrayMenu.Add("&CapsLock", (*) => {})
-A_TrayMenu.Disable("&CapsLock")
-SetCapsLockMenuCheck()
+CAPSLOCK := "&CapsLock"
+A_TrayMenu.Add(CAPSLOCK, (*) => {})
+A_TrayMenu.Disable(CAPSLOCK)
+SetCapsLockMenuChecked()
 
 A_TrayMenu.Add()
-A_TrayMenu.Add("&Disable", DisableKey)
+A_TrayMenu.Add("&Disable", ToggleDisabled)
 A_TrayMenu.Add("&Restart", (*) => Reload())
 A_TrayMenu.Add()
-A_TrayMenu.Add("&Settings...", MenuSettings)
+A_TrayMenu.Add("&Settings...", ShowIniEditor)
 A_TrayMenu.Add("&Help", (*) => Run(AssetDir "\help.html"))
 A_TrayMenu.Add("Compose &Key Table", (*) => Run(AssetDir "\keytable.html"))
 A_TrayMenu.Add()
-A_TrayMenu.Add("&About", MenuAbout)
+A_TrayMenu.Add("&About", ShowAbout)
 A_TrayMenu.Add("E&xit", (*) => ExitApp())
 
 A_TrayMenu.Default := "&Settings..."
-A_IconTip := "Compose Keys : right-click for options."
+A_IconTip := "Compose Keys: right-click for options."
 TraySetIcon(AssetDir "\compose.ico")
+
+; Global state
+Disabled := false
+
+; Allows user to easily edit the settings
+#Include ini-editor.ahk
 
 ; This is where the real action is!
 ; Loads all the compose key combinations and the cp() function.
 #Include hotstring.ahk
 
-DisableKey(*) {
-    global disabled
+; Tell the user that compose-keys has loaded, and which modifier is active
+TrayTip("Compose Keys is now running...`nPress [ " ModifierKey " ] to start a new key sequence.", "Compose Keys", 1)
 
-    if (disabled == true) {
-        disabled := false
+
+
+ToggleDisabled(*) {
+    global Disabled
+
+    if (Disabled == true) {
+        Disabled := false
         A_TrayMenu.Uncheck("&Disable")
         TraySetIcon(AssetDir "\compose.ico")
     } else {
-        disabled := true
+        Disabled := true
         A_TrayMenu.Check("&Disable")
         TraySetIcon(AssetDir "\compose2.ico")
     }
 }
 
-MenuSettings(*) {
+ShowIniEditor(*) {
     IniSettingsEditor("Compose", AssetDir "\config.ini")
     ReadIni()
     A_TrayMenu.Rename("1&", ModifierKey)
-    SetCapsLockMenuCheck()
+    SetCapsLockMenuChecked()
 }
 
-MenuAbout(*) {
+ShowAbout(*) {
     AppName := "Compose Keys"
     if A_IsCompiled
         AppName .= " v" FileGetVersion(A_ScriptFullPath)
@@ -96,8 +102,6 @@ MenuAbout(*) {
     MsgBox(Format("{}`n`nby {}`n`n{}", AppName, Symon, Aaron), "Compose Key", 64)
 }
 
-
-; User settings
 ReadIni(*) {
     old_key := IsSet(ModifierKey) ? GetAhkKeyName(ModifierKey) : ""
     
@@ -135,11 +139,11 @@ GetAhkKeyName(key_name) {
     }
 }
 
-SetCapsLockMenuCheck(*) {
+SetCapsLockMenuChecked(*) {
     if (UseCapsLock == 1) {
-        A_TrayMenu.Check("&CapsLock")
+        A_TrayMenu.Check(CAPSLOCK)
     } else {
-        A_TrayMenu.Uncheck("&CapsLock")
+        A_TrayMenu.Uncheck(CAPSLOCK)
     }
 }
 
