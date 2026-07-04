@@ -85,68 +85,28 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     myGui.SetFont(, "Segoe UI")
 
     ; ── Read ini file, build tree, store values ──────────────────────────────
-    CurrSecID := 0, CurrID := 0, CurrKey := "", CurrSec := "", CurrLength := 0
+    ; The ini file doubles as its own schema: a comment line directly under a
+    ; section or key — shaped like ";<Name> <text>" — is parsed as metadata
+    ; (Type/Default/Options/Hidden/CheckboxName) rather than shown as-is.
+    ; Anything else starting with ";" is just an ordinary comment and is skipped.
+
+    CurrSecID := 0, CurrID := 0, CurrKey := "", CurrSec := ""
 
     Loop Read, IniFile {
-        CurrLine       := A_LoopReadLine
-        CurrLineLength := StrLen(CurrLine)
+        CurrLine := A_LoopReadLine
 
         If (Trim(CurrLine) = "")        ; blank line
             Continue
 
-        If (SubStr(CurrLine, 1, 1) = ";") {   ; comment / description line
-            LinePrefix := SubStr(CurrLine, 1, CurrLength + 2)
-            Des        := SubStr(CurrLine, CurrLength + 3)
-
-            If (CurrID && !nodeSec.Get(CurrID, true) && ";" CurrKey " " = LinePrefix) {
-                ; --- key description ---
-                If (SubStr(Des, 1, 6) = "Type: ") {
-                    Typ := Trim(SubStr(Des, 7))
-                    Des := "`n" Des
-                    If (SubStr(Typ, 1, 9) = "DropDown ") {
-                        nodeFor[CurrID] := SubStr(Typ, 10)
-                        Typ := "DropDown", Des := ""
-                    } Else If (SubStr(Typ, 1, 8) = "DateTime") {
-                        Fmt := Trim(SubStr(Typ, 9))
-                        nodeFor[CurrID] := (Fmt = "") ? "dddd MMMM d, yyyy HH:mm:ss tt" : Fmt
-                        Typ := "DateTime", Des := ""
-                    } Else If (Typ = "CheckBox") {
-                        Des := ""
-                    }
-                    nodeTyp[CurrID] := Typ
-                } Else If (SubStr(Des, 1, 9) = "Default: ") {
-                    nodeDef[CurrID] := SubStr(Des, 10), Des := ""
-                } Else If (SubStr(Des, 1, 9) = "Options: ") {
-                    nodeOpt[CurrID] := SubStr(Des, 10), Des := ""
-                } Else If (InStr(Des, "Hidden:") = 1) {
-                    tv.Delete(CurrID), Des := "", CurrID := 0
-                } Else If (SubStr(Des, 1, 14) = "CheckboxName: ") {
-                    nodeChkN[CurrID] := SubStr(Des, 15), Des := ""
-                }
-                If CurrID
-                    nodeDes[CurrID] := nodeDes.Get(CurrID, "") "`n" Des
-
-            } Else If (CurrID && nodeSec.Get(CurrID, false) && ";" CurrSec " " = LinePrefix) {
-                ; --- section description ---
-                If (InStr(Des, "Hidden:") = 1) {
-                    tv.Delete(CurrID), Des := "", CurrSecID := 0
-                }
-                If CurrID
-                    nodeDes[CurrID] := nodeDes.Get(CurrID, "") "`n" Des
-            }
-
-            ; Strip leading newline
-            If (CurrID && SubStr(nodeDes.Get(CurrID, ""), 1, 1) = "`n")
-                nodeDes[CurrID] := SubStr(nodeDes[CurrID], 2)
+        If (SubStr(CurrLine, 1, 1) = ";") {
+            ParseDescriptionLine(CurrLine)
             Continue
         }
 
-        If (SubStr(CurrLine, 1, 1) = "[" && SubStr(CurrLine, CurrLineLength, 1) = "]") {
-            ; section line
-            CurrSec    := Trim(SubStr(CurrLine, 2, CurrLineLength - 2))
-            CurrLength := StrLen(CurrSec)
-            CurrSecID  := tv.Add(CurrSec)
-            CurrID     := CurrSecID
+        If IsSectionHeader(CurrLine) {
+            CurrSec   := Trim(SubStr(CurrLine, 2, StrLen(CurrLine) - 2))
+            CurrSecID := tv.Add(CurrSec)
+            CurrID    := CurrSecID
             nodeSec[CurrID] := true
             CurrKey := ""
             Continue
@@ -154,14 +114,91 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
 
         Pos := InStr(CurrLine, "=")     ; key = value line
         If (Pos && CurrSecID) {
-            CurrKey    := Trim(SubStr(CurrLine, 1, Pos - 1))
-            CurrVal    := SubStr(CurrLine, Pos + 1)
-            CurrLength := StrLen(CurrKey)
-            CurrID     := tv.Add(CurrKey, CurrSecID)
+            CurrKey := Trim(SubStr(CurrLine, 1, Pos - 1))
+            CurrVal := SubStr(CurrLine, Pos + 1)
+            CurrID  := tv.Add(CurrKey, CurrSecID)
             nodeVal[CurrID] := CurrVal
             nodeSec[CurrID] := false
             nodeDef[CurrID] := CurrVal   ; initial value is default unless overridden
         }
+    }
+
+    IsSectionHeader(Line) {
+        Return SubStr(Line, 1, 1) = "[" && SubStr(Line, StrLen(Line), 1) = "]"
+    }
+
+    ParseDescriptionLine(CurrLine) {
+        ; Only recognize lines that describe the item just added to the tree.
+        If !CurrID
+            Return
+        Name   := nodeSec.Get(CurrID, false) ? CurrSec : CurrKey
+        Prefix := ";" Name " "
+        If (SubStr(CurrLine, 1, StrLen(Prefix)) != Prefix)
+            Return
+
+        Des := SubStr(CurrLine, StrLen(Prefix) + 1)
+
+        If nodeSec.Get(CurrID, false) {
+            If (InStr(Des, "Hidden:") = 1) {
+                tv.Delete(CurrID)
+                Des := ""
+                CurrSecID := 0
+            }
+        } Else {
+            Des := ParseKeyDirective(Des)
+        }
+
+        nodeDes[CurrID] := nodeDes.Get(CurrID, "") "`n" Des
+        If (SubStr(nodeDes[CurrID], 1, 1) = "`n")     ; drop the leading blank line
+            nodeDes[CurrID] := SubStr(nodeDes[CurrID], 2)
+    }
+
+    ; Recognizes the "Type: / Default: / Options: / Hidden: / CheckboxName: "
+    ; directives on a key's description line, records them into the node*
+    ; maps, and returns what (if anything) should remain visible as
+    ; free-text description.
+    ParseKeyDirective(Des) {
+        Static TypePrefix := "Type: "
+        Static DefPrefix  := "Default: "
+        Static OptPrefix  := "Options: "
+        Static ChkPrefix  := "CheckboxName: "
+
+        If (SubStr(Des, 1, StrLen(TypePrefix)) = TypePrefix) {
+            Typ := Trim(SubStr(Des, StrLen(TypePrefix) + 1))
+            Des := "`n" Des   ; shown in the description panel unless overridden below
+
+            If (SubStr(Typ, 1, 9) = "DropDown ") {
+                nodeFor[CurrID] := SubStr(Typ, 10)
+                Typ := "DropDown"
+                Des := ""
+            } Else If (SubStr(Typ, 1, 8) = "DateTime") {
+                Fmt := Trim(SubStr(Typ, 9))
+                nodeFor[CurrID] := (Fmt = "") ? "dddd MMMM d, yyyy HH:mm:ss tt" : Fmt
+                Typ := "DateTime"
+                Des := ""
+            } Else If (Typ = "CheckBox") {
+                Des := ""
+            }
+            nodeTyp[CurrID] := Typ
+
+        } Else If (SubStr(Des, 1, StrLen(DefPrefix)) = DefPrefix) {
+            nodeDef[CurrID] := SubStr(Des, StrLen(DefPrefix) + 1)
+            Des := ""
+
+        } Else If (SubStr(Des, 1, StrLen(OptPrefix)) = OptPrefix) {
+            nodeOpt[CurrID] := SubStr(Des, StrLen(OptPrefix) + 1)
+            Des := ""
+
+        } Else If (InStr(Des, "Hidden:") = 1) {
+            tv.Delete(CurrID)
+            CurrID := 0
+            Des := ""
+
+        } Else If (SubStr(Des, 1, StrLen(ChkPrefix)) = ChkPrefix) {
+            nodeChkN[CurrID] := SubStr(Des, StrLen(ChkPrefix) + 1)
+            Des := ""
+        }
+        Return Des
     }
 
     ; Pre-select first key of first section
