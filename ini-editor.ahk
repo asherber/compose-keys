@@ -53,27 +53,27 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         DisableGui := false
 
     ; ── Add controls (order matters for ClassNN compatibility) ──────────────
-    sb         := myGui.Add("StatusBar")
-    tv         := myGui.Add("TreeView",     Format("x{} y{} w{} h221 0x400", TreeX, TreeY, TreeW))
-    edt1       := myGui.Add("Edit",         Format("x{} y{} w{} h20", ValueX, ValueY, ValueW))
-    edt2       := myGui.Add("Edit",         Format("x{} y{} w{} h115 ReadOnly -VScroll", ValueX, TreeY + 60 + LabelH, ValueW))
-    btnExit    := myGui.Add("Button",       Format("x{} y310 w{} h{}", (ValueX + ValueW - BtnW), BtnW, BtnH),  "E&xit")
-    btnBrowse  := myGui.Add("Button",       Format("x{} y88 w{} h{}", 505, BtnW, BtnH),    "B&rowse")
-    btnDefault := myGui.Add("Button",       Format("x{} y275 w{} h{}", ValueX, 100, BtnH),   "&Restore Default")
-    dtPicker   := myGui.Add("DateTime",     Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
-    hkCtrl     := myGui.Add("Hotkey",       Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
-    ddl        := myGui.Add("DropDownList", Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 120))
-    chkBox     := myGui.Add("CheckBox",     Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
+    StatusBar         := myGui.Add("StatusBar")
+    TreeView          := myGui.Add("TreeView",     Format("x{} y{} w{} h221 0x400", TreeX, TreeY, TreeW))
+    ValueEdit         := myGui.Add("Edit",         Format("x{} y{} w{} h20", ValueX, ValueY, ValueW))
+    DescriptionText   := myGui.Add("Text",         Format("x{} y{} w{} h115", ValueX, TreeY + 60 + LabelH, ValueW))
+    ExitBtn           := myGui.Add("Button",       Format("x{} y310 w{} h{}", (ValueX + ValueW - BtnW), BtnW, BtnH),  "E&xit")
+    BrowseBtn         := myGui.Add("Button",       Format("x{} y88 w{} h{}", 505, BtnW, BtnH),    "B&rowse")
+    RestoreBtn        := myGui.Add("Button",       Format("x{} y275 w{} h{}", ValueX, 100, BtnH),   "&Restore Default")
+    DatePicker        := myGui.Add("DateTime",     Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
+    HotKeyControl     := myGui.Add("Hotkey",       Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
+    DropDown          := myGui.Add("DropDownList", Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 120))
+    CheckBox          := myGui.Add("CheckBox",     Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
 
-    SetEditMargins(edt2.Hwnd, 5, 5)
+    SetEditMargins(DescriptionText.Hwnd, 5, 5)
 
     myGui.SetFont("Bold", "Segoe UI")
     myGui.Add("Text", Format("x{} y{}", ValueX, TreeY),  "Value")
     myGui.Add("Text", Format("x{} y{}", ValueX, TreeY + 60), "Description")
 
-    HelpTip := "(All changes are autosaved)"
+    HelpTip := "Changes are automatically saved"
     If (HelpText != "") {
-        HelpTip := "( All changes are Auto-Saved - Press F1 for Help )"
+        HelpTip := Format("{}. Press F1 for Help.", HelpTip)
         HotIf(() => WinActive(ProgName " Settings"))
         Hotkey("F1", ShowHelp)
         HotIf()
@@ -105,7 +105,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
 
         If IsSectionHeader(CurrLine) {
             CurrSec   := Trim(SubStr(CurrLine, 2, StrLen(CurrLine) - 2))
-            CurrSecID := tv.Add(CurrSec)
+            CurrSecID := TreeView.Add(CurrSec)
             CurrID    := CurrSecID
             nodeSec[CurrID] := true
             CurrKey := ""
@@ -116,7 +116,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         If (Pos && CurrSecID) {
             CurrKey := Trim(SubStr(CurrLine, 1, Pos - 1))
             CurrVal := SubStr(CurrLine, Pos + 1)
-            CurrID  := tv.Add(CurrKey, CurrSecID)
+            CurrID  := TreeView.Add(CurrKey, CurrSecID)
             nodeVal[CurrID] := CurrVal
             nodeSec[CurrID] := false
             nodeDef[CurrID] := CurrVal   ; initial value is default unless overridden
@@ -140,7 +140,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
 
         If nodeSec.Get(CurrID, false) {
             If (InStr(Des, "Hidden:") = 1) {
-                tv.Delete(CurrID)
+                TreeView.Delete(CurrID)
                 Des := ""
                 CurrSecID := 0
             }
@@ -190,7 +190,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
             Des := ""
 
         } Else If (InStr(Des, "Hidden:") = 1) {
-            tv.Delete(CurrID)
+            TreeView.Delete(CurrID)
             CurrID := 0
             Des := ""
 
@@ -202,13 +202,13 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     }
 
     ; Pre-select first key of first section
-    tv.Modify(tv.GetChild(tv.GetNext()), "Select")
-    sb.SetText("Ready")
+    TreeView.Modify(TreeView.GetChild(TreeView.GetNext()), "Select")
+    StatusBar.SetText("Ready")
     myGui.Show("w570 h365")
     GuiHwnd := myGui.Hwnd
 
     ; ── Runtime state ────────────────────────────────────────────────────────
-    ControlUsed     := edt1
+    ControlUsed     := ValueEdit
     InvertedOptions := ""
     CurrVal         := ""
     CurrID          := 0
@@ -218,24 +218,24 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     Populating      := false   ; true while code (not the user) is writing to a control
 
     ; Bind events — the GUI now reacts to notifications instead of being polled
-    btnExit.OnEvent("Click",    CloseEditor)
-    btnBrowse.OnEvent("Click",  BtnBrowseKeyValue)
-    btnDefault.OnEvent("Click", RestoreDefault)
+    ExitBtn.OnEvent("Click",    CloseEditor)
+    BrowseBtn.OnEvent("Click",  BtnBrowseKeyValue)
+    RestoreBtn.OnEvent("Click", RestoreDefault)
     myGui.OnEvent("Close",      CloseEditor)
     myGui.OnEvent("Size",       GuiResize)
-    tv.OnEvent("ItemSelect",    TreeSelectionChanged)
+    TreeView.OnEvent("ItemSelect",    TreeSelectionChanged)
 
-    edt1.OnEvent("Change",      EditValueChanged)      ; debounced (fires per keystroke)
-    dtPicker.OnEvent("Change",  (*) => CommitValue(dtPicker.Value))
-    hkCtrl.OnEvent("Change",    (*) => CommitValue(hkCtrl.Value))
-    ddl.OnEvent("Change",       (*) => CommitValue(ddl.Text))
-    chkBox.OnEvent("Click",     (*) => CommitValue(chkBox.Value))
+    ValueEdit.OnEvent("Change",      EditValueChanged)      ; debounced (fires per keystroke)
+    DatePicker.OnEvent("Change",  (*) => CommitValue(DatePicker.Value))
+    HotKeyControl.OnEvent("Change",    (*) => CommitValue(HotKeyControl.Value))
+    DropDown.OnEvent("Change",       (*) => CommitValue(DropDown.Text))
+    CheckBox.OnEvent("Click",     (*) => CommitValue(CheckBox.Value))
 
     ; Populate the panel for the item pre-selected above, then block until closed.
     ; No manual Sleep/poll loop is needed: WinWaitClose blocks efficiently on the
     ; OS message queue and returns the instant the window is destroyed or hidden,
     ; whether that happens via the Exit button, Alt+F4, or the title-bar X.
-    RefreshDisplay(tv.GetSelection())
+    RefreshDisplay(TreeView.GetSelection())
     WinWaitClose("ahk_id " GuiHwnd)
 
     ; ── Cleanup ──────────────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     TreeSelectionChanged(*) {
         ; Fires only on a genuine selection change (mouse or keyboard), so no
         ; "did the ID change?" bookkeeping is needed here anymore.
-        Id := tv.GetSelection()
+        Id := TreeView.GetSelection()
         If Id
             RefreshDisplay(Id)
     }
@@ -280,26 +280,26 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         Typ    := nodeTyp.Get(CurrID, "")
 
         ; Browse button
-        btnBrowse.Visible := (Typ = "File" || Typ = "Folder")
+        BrowseBtn.Visible := (Typ = "File" || Typ = "Folder")
 
         ; Choose active value control
         If (Typ = "DateTime")
-            ControlUsed := dtPicker
+            ControlUsed := DatePicker
         Else If (Typ = "Hotkey")
-            ControlUsed := hkCtrl
+            ControlUsed := HotKeyControl
         Else If (Typ = "DropDown")
-            ControlUsed := ddl
+            ControlUsed := DropDown
         Else If (Typ = "CheckBox")
-            ControlUsed := chkBox
+            ControlUsed := CheckBox
         Else
-            ControlUsed := edt1
+            ControlUsed := ValueEdit
 
         ; Show only the relevant value control
-        For ctrl in [dtPicker, hkCtrl, ddl, chkBox, edt1]
+        For ctrl in [DatePicker, HotKeyControl, DropDown, CheckBox, ValueEdit]
             ctrl.Visible := (ctrl == ControlUsed)
 
-        If (ControlUsed == chkBox)
-            chkBox.Text := nodeChkN.Get(CurrID, "")
+        If (ControlUsed == CheckBox)
+            CheckBox.Text := nodeChkN.Get(CurrID, "")
 
         ; Apply custom options to this control, track inverted options for later removal
         CurrOpt := nodeOpt.Get(CurrID, "")
@@ -321,28 +321,28 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         If nodeSec.Get(CurrID, false) {
             ; Section selected — disable value editing
             CurrVal := ""
-            edt1.Value    := ""
-            edt1.Enabled    := false
-            btnDefault.Enabled := false
+            ValueEdit.Value    := ""
+            ValueEdit.Enabled    := false
+            RestoreBtn.Enabled := false
         } Else {
             ; Key selected — populate all value controls
             CurrVal := nodeVal.Get(CurrID, "")
-            edt1.Value := CurrVal
-            Try dtPicker.Value := CurrVal
-            Try hkCtrl.Value   := CurrVal
-            ddl.Delete()
+            ValueEdit.Value := CurrVal
+            Try DatePicker.Value := CurrVal
+            Try HotKeyControl.Value   := CurrVal
+            DropDown.Delete()
             Items := StrSplit(nodeFor.Get(CurrID, ""), "|")
             If (Items.Length > 0 && Items[1] != "") {
-                ddl.Add(Items)
-                ddl.Choose(CurrVal)
+                DropDown.Add(Items)
+                DropDown.Choose(CurrVal)
             }
-            Try chkBox.Value := Integer(CurrVal)
-            edt1.Enabled    := true
-            btnDefault.Enabled := true
+            Try CheckBox.Value := Integer(CurrVal)
+            ValueEdit.Enabled    := true
+            RestoreBtn.Enabled := true
         }
         Des     := RTrim(nodeDes.Get(CurrID, ""), "`n")
         DefText := !nodeSec.Get(CurrID, false) ? (Des != "" ? "`n`n" : "") "Default: " nodeDef.Get(CurrID, "") : ""
-        edt2.Value := Des . DefText
+        DescriptionText.Value := Des . DefText
 
         Populating := false
     }
@@ -356,7 +356,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     }
 
     CommitEditValue() {
-        CommitValue(edt1.Value)
+        CommitValue(ValueEdit.Value)
     }
 
     CommitValue(NewVal) {
@@ -369,7 +369,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         ; Consistency check for Integer type
         If (Typ = "Integer" && NewVal != "" && !IsInteger(NewVal)) {
             Populating := true
-            edt1.Value := CurrVal
+            ValueEdit.Value := CurrVal
             Populating := false
             FlashInvalid("Enter a whole number")
             Return
@@ -378,7 +378,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         If (Typ = "Float" && NewVal != "" && NewVal != "."
                 && !IsFloat(NewVal) && !IsInteger(NewVal)) {
             Populating := true
-            edt1.Value := CurrVal
+            ValueEdit.Value := CurrVal
             Populating := false
             FlashInvalid("Enter a number")
             Return
@@ -386,12 +386,12 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
 
         nodeVal[CurrID] := NewVal
         CurrVal := NewVal
-        PrntID := tv.GetParent(CurrID)
-        SelSec := tv.GetText(PrntID)
-        SelKey := tv.GetText(CurrID)
+        PrntID := TreeView.GetParent(CurrID)
+        SelSec := TreeView.GetText(PrntID)
+        SelKey := TreeView.GetText(CurrID)
         If (SelSec && SelKey) {
             IniWrite(NewVal, IniFile, SelSec, SelKey)
-            sb.SetText("Saved " SelSec " › " SelKey)
+            StatusBar.SetText("Saved " SelSec " › " SelKey)
         }
     }
 
@@ -402,12 +402,12 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         nodeVal[CurrID] := DefVal
         RefreshDisplay(CurrID)   ; repaints controls with the default value
 
-        PrntID := tv.GetParent(CurrID)
-        SelSec := tv.GetText(PrntID)
-        SelKey := tv.GetText(CurrID)
+        PrntID := TreeView.GetParent(CurrID)
+        SelSec := TreeView.GetText(PrntID)
+        SelKey := TreeView.GetText(CurrID)
         If (SelSec && SelKey) {
             IniWrite(DefVal, IniFile, SelSec, SelKey)
-            sb.SetText("Restored default for " SelSec " › " SelKey)
+            StatusBar.SetText("Restored default for " SelSec " › " SelKey)
         }
     }
 
@@ -420,7 +420,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     }
 
     BtnBrowseKeyValue(*) {
-        StartVal := edt1.Value
+        StartVal := ValueEdit.Value
         myGui.Opt("+OwnDialogs")
         Selected := ""
 
@@ -447,7 +447,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
 
         If (Selected != "") {
             Selected := StrReplace(Selected, A_ScriptDir "\")
-            edt1.Value      := Selected
+            ValueEdit.Value      := Selected
             nodeVal[CurrID] := Selected
         }
     }
@@ -456,16 +456,16 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
         If (MinMax = -1)    ; minimized — skip
             Return
         ; Reposition/resize key controls to follow window edges
-        tv.Move(,, TreeW, Height - 158)
-        edt2.Move(,, Width - RightMargin, Height - 280)
-        edt1.Move(,, Width - RightMargin)
-        dtPicker.Move(,, Width - RightMargin)
-        hkCtrl.Move(,, Width - RightMargin)
-        ddl.Move(,, Width - RightMargin)
-        chkBox.Move(,, Width - RightMargin)
-        btnExit.Move(Width // 2 - 35, Height - 65)
-        btnDefault.Move(, Height - 106)
-        btnBrowse.Move(Width - 65)
+        TreeView.Move(,, TreeW, Height - 158)
+        DescriptionText.Move(,, Width - RightMargin, Height - 280)
+        ValueEdit.Move(,, Width - RightMargin)
+        DatePicker.Move(,, Width - RightMargin)
+        HotKeyControl.Move(,, Width - RightMargin)
+        DropDown.Move(,, Width - RightMargin)
+        CheckBox.Move(,, Width - RightMargin)
+        ExitBtn.Move(Width // 2 - 35, Height - 65)
+        RestoreBtn.Move(, Height - 106)
+        BrowseBtn.Move(Width - 65)
     }
 
     FlashInvalid(Msg) {
