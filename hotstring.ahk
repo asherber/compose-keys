@@ -19,12 +19,11 @@ UpdateModifierKey(old_key, new_key) {
 }
 
 ModifierKeyFunction(*) {
-    global
-    if (disabled == true) {
+    if (disabled) {
         return
     }
 
-    if (modify = false) {
+    if (!modify) {
         SetTimer () => modify := false, -ResetDelay    ; reset after a short period to avoid unwanted compose keys
     } else {
         ; pressing the modifier twice will reset it
@@ -33,22 +32,34 @@ ModifierKeyFunction(*) {
         }
     }
     
-    modify := !modify
+    global modify := !modify
 }
 
 
 ; Main list of character replacements, adapt to your needs
 ; they consist of 2-character triggers, followed by a call to the cp() function with the replacement character
 #Include keys.ahk
+LoadCustomFile(AssetDir "\customkeys.txt")   
 
 ; The main Compose function
 cp(char) {
-    global modify
+    if (modify) {
+        global modify := false
+        length := StrLen(A_ThisHotkey) - InStr(A_ThisHotkey, ":", false, 1, 2)   ; length of the trigger, minus the two colon    
+        Send "{BackSpace " length "}"
+        Send char
+    }
+}
 
-    if (modify = true) {
-        modify := false
-        length := StrLen(A_ThisHotkey) - 2    ; length of the trigger, minus the two colons
-        Send "{BackSpace " length "}"    ; remove the trigger characters
-        Send char               ; send replacement
+LoadCustomFile(file) {
+    if !FileExist(file) {
+        return
+    }
+
+    Loop read, file
+    {
+        if RegExMatch(A_LoopReadLine, '::(?<trigger>.+?)::cp\("(?<arg>.*)"\)', &match) {
+            Hotstring("::" . match.trigger, (*) => cp(match.arg))
+        }
     }
 }
