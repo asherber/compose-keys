@@ -14,14 +14,21 @@ An icon for **compose-keys** will appear in your system tray, Right-click to acc
 
 Press and **release** the modifier key, then type any of the [multi-character sequences](//asherber.github.io/compose-keys/keytable.html) to obtain the accent or symbol you need.
 
-By default, the modifier is the [ **Right Ctrl** ] key, but it can easily be changed in the Settings dialog.
+By default, the modifier is the right `Ctrl` key, but it can easily be changed in the Settings dialog.
 
 **Example:**
 
-To obtain [ **á** ] you would press [ **Right Ctrl** ] then [ **'** ] then [ **a** ].  The order is important!
+To obtain `á` you would press and release the **modifier key**, then type `'` and then `a`. The order is important!
 
   - Generally for accented letters the key sequence is: **modifier &rarr; accent &rarr; letter**
   - For symbols it varies according to the list in the link above. The characters chosen are *usually* quite logical and easy to learn.
+
+### Unicode and ASCII code sequences
+
+You can also use compose-keys to directly enter Unicode code points and ASCII codes and have them replaced by the corresponding character.
+
+- For Unicode, press and release the **modifier key**, then type `/u` and then the 4-character code point (for example, `03B5` or `03b5` for a lowercase epsilon `ε`). 
+- For ASCII, press and release the **modifier key**, then type `/a` and then the 4-digit code (for example, `0167` for a section sign `§`).
 
 ## Settings
 
@@ -47,7 +54,7 @@ Each definition line in this file should be an AutoHotKey hotstring definition m
 
 `<keys>` is the sequence you want to type, and `<repl>` is the character or string you want to replace it with. For example, `::qq::cp("Foo")` can be used to replace `qq` with `Foo`.
 
-- The key sequence follows the usual AutoHotKey rules, so if it contains any character with a special meaning to AutoHotKey, like `^`, that character needs to be escaped with a backtick. For example, the included sequence for `ĥ` (h with circumflex) is defined as ``^h`, but you would only need to type `^h` to trigger the replacement.
+- The key sequence follows the usual AutoHotKey rules, so if it contains any character with a special meaning to AutoHotKey, like `^`, that character needs to be escaped with a backtick. For example, the included sequence for `ĥ` (h with circumflex) is defined as `` `^h ``, but you would only need to type `^h` to trigger the replacement.
 - Key sequences are not limited to two characters.
 - The replacement must look exactly like the above, as an argument passed to the function `cp()`. 
 - Do not add any hotstring modifiers between the first two colons.
