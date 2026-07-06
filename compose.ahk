@@ -81,16 +81,14 @@ NoOp(*) {
 }
 
 ToggleDisabled(*) {
-    global Disabled
+    global Disabled := !Disabled
 
-    if (Disabled == true) {
-        Disabled := false
-        A_TrayMenu.Uncheck("&Disable")
-        TraySetIcon(AssetDir "\compose.ico")
-    } else {
-        Disabled := true
-        A_TrayMenu.Check("&Disable")
+    if Disabled {
+        A_TrayMenu.Rename("&Disable", "&Enable")
         TraySetIcon(AssetDir "\compose2.ico")
+    } else {
+        A_TrayMenu.Rename("&Enable", "&Disable")
+        TraySetIcon(AssetDir "\compose.ico")
     }
 }
 
