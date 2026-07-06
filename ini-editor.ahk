@@ -33,7 +33,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     ; ── Layout constants (kept in sync between initial layout and GuiResize) ──
     TreeX       := 10
     TreeW       := 180
-    TreeY       := 75
+    TreeY       := 55
     ValueX      := 215
     ValueW      := 340
     LabelH      := 18
@@ -57,9 +57,9 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     TreeView          := myGui.Add("TreeView",     Format("x{} y{} w{} h221 0x400", TreeX, TreeY, TreeW))
     ValueEdit         := myGui.Add("Edit",         Format("x{} y{} w{} h20", ValueX, ValueY, ValueW))
     DescriptionText   := myGui.Add("Text",         Format("x{} y{} w{} h115", ValueX, TreeY + 60 + LabelH, ValueW))
-    ExitBtn           := myGui.Add("Button",       Format("x{} y310 w{} h{}", (ValueX + ValueW - BtnW), BtnW, BtnH),  "E&xit")
-    BrowseBtn         := myGui.Add("Button",       Format("x{} y88 w{} h{}", 505, BtnW, BtnH),    "B&rowse")
-    RestoreBtn        := myGui.Add("Button",       Format("x{} y275 w{} h{}", ValueX, 100, BtnH),   "&Restore Default")
+    ExitBtn           := myGui.Add("Button",       Format("x{} y290 w{} h{}", (ValueX + ValueW - BtnW), BtnW, BtnH),  "&Close")
+    BrowseBtn         := myGui.Add("Button",       Format("x{} y68 w{} h{}", 505, BtnW, BtnH),    "B&rowse")
+    RestoreBtn        := myGui.Add("Button",       Format("x{} y255 w{} h{}", ValueX, 100, BtnH),   "&Restore Default")
     DatePicker        := myGui.Add("DateTime",     Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
     HotKeyControl     := myGui.Add("Hotkey",       Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 20))
     DropDown          := myGui.Add("DropDownList", Format("x{} y{} w{} h{}", ValueX, ValueY, ValueW, 120))
@@ -70,16 +70,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     myGui.SetFont("Bold", "Segoe UI")
     myGui.Add("Text", Format("x{} y{}", ValueX, TreeY),  "Value")
     myGui.Add("Text", Format("x{} y{}", ValueX, TreeY + 60), "Description")
-
-    HelpTip := "Changes are automatically saved"
-    If (HelpText != "") {
-        HelpTip := Format("{}. Press F1 for Help.", HelpTip)
-        HotIf(() => WinActive(ProgName " Settings"))
-        Hotkey("F1", ShowHelp)
-        HotIf()
-    }
-    myGui.SetFont("s9 Norm cDefault", "Segoe UI")
-    myGui.Add("Text", Format("x{} y35 w{} h20 +Center", 45, 480), HelpTip)
+    
     myGui.SetFont("s14 Bold", "Segoe UI")
     myGui.Add("Text", Format("x{} y8 w{} +Center", 45, 480), "Settings for " . ProgName)
     myGui.SetFont(, "Segoe UI")
@@ -204,7 +195,7 @@ IniSettingsEditor(ProgName, IniFile, OwnedBy := 0, DisableGui := 0, HelpText := 
     ; Pre-select first key of first section
     TreeView.Modify(TreeView.GetChild(TreeView.GetNext()), "Select")
     StatusBar.SetText("Ready")
-    myGui.Show("w570 h365")
+    myGui.Show("w570 h345")
     GuiHwnd := myGui.Hwnd
 
     ; ── Runtime state ────────────────────────────────────────────────────────
