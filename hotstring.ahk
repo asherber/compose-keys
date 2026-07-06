@@ -58,7 +58,7 @@ ResetState() {
 LoadCustomKeysFile(AssetDir "\customkeys.txt")   
 
 ; Allow for use of ascii/unicode codes as triggers, e.g. /u00E9 or /a0233
-#Include XHotstring.ahk
+#Include vendor\Descolada\XHotstring.ahk
 
 ; Trigger inside words; replace immediately; case-sensitive; no auto-backspace; clear buffer
 XHotstring("? * c b0 z")
