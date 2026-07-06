@@ -26,22 +26,18 @@ if !FileExist(AssetDir "\config.ini")
     FileInstall("config.ini", AssetDir "\config.ini", 1)
 }
 
+
 ; UI
 TraySetIcon(AssetDir "\compose.ico")
-
-ReadIni()
 
 A_TrayMenu.ClickCount := 2
 A_TrayMenu.Delete()
 
-; Display the current modifier key at the top of the menu
-A_TrayMenu.Add(ModifierKey, (*) => {})
-A_TrayMenu.Disable(ModifierKey)
-CAPSLOCK := "&CapsLock"
-A_TrayMenu.Add(CAPSLOCK, (*) => {})
-A_TrayMenu.Disable(CAPSLOCK)
-SetCapsLockMenuChecked()
-
+; Modifier key label will be set later
+A_TrayMenu.Add("tba", NoOp)
+A_TrayMenu.Disable("tba")
+A_TrayMenu.Check("tba")
+; CapsLock menu item will be inserted later, if needed
 A_TrayMenu.Add()
 A_TrayMenu.Add("&Disable", ToggleDisabled)
 A_TrayMenu.Add("&Restart", (*) => Reload())
@@ -53,9 +49,13 @@ A_TrayMenu.Add()
 A_TrayMenu.Add("&About", ShowAbout)
 A_TrayMenu.Add("E&xit", (*) => ExitApp())
 
+ReadIni()
+
 A_TrayMenu.Default := "&Settings..."
 A_IconTip := "Compose Keys: right-click for options."
 TraySetIcon(AssetDir "\compose.ico")
+
+
 
 ; Global state
 Disabled := false
@@ -71,6 +71,9 @@ Disabled := false
 TrayTip("Compose Keys is now running...`nPress [ " ModifierKey " ] to start a new key sequence.", "Compose Keys", 1)
 
 
+NoOp(*) {
+    ; do nothing
+}
 
 ToggleDisabled(*) {
     global Disabled
@@ -89,8 +92,6 @@ ToggleDisabled(*) {
 ShowIniEditor(*) {
     IniSettingsEditor("Compose Keys", AssetDir "\config.ini")
     ReadIni()
-    A_TrayMenu.Rename("1&", ModifierKey)
-    SetCapsLockMenuChecked()
 }
 
 ShowAbout(*) {
@@ -109,6 +110,9 @@ ReadIni(*) {
     global ModifierKey   := IniRead(AssetDir "\config.ini", "Settings", "ModifierKey")
     global UseCapsLock   := IniRead(AssetDir "\config.ini", "Settings", "UseCapsLock")
     global ResetDelay    := IniRead(AssetDir "\config.ini", "Settings", "ResetDelay")
+    
+    A_TrayMenu.Rename("1&", ModifierKey)
+    SetCapsLockMenuItem()
 
     new_key := GetAhkKeyName(ModifierKey)
     UpdateModifierKey(old_key, new_key)
@@ -139,11 +143,12 @@ GetAhkKeyName(key_name) {
     }
 }
 
-SetCapsLockMenuChecked(*) {
-    if (UseCapsLock == 1) {
+SetCapsLockMenuItem() {
+    CAPSLOCK := "&CapsLock"
+    Try A_TrayMenu.Delete(CAPSLOCK)
+    if UseCapsLock {
+        A_TrayMenu.Insert("2&", CAPSLOCK, NoOp)
+        A_TrayMenu.Disable(CAPSLOCK)
         A_TrayMenu.Check(CAPSLOCK)
-    } else {
-        A_TrayMenu.Uncheck(CAPSLOCK)
     }
 }
-
