@@ -1,7 +1,7 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 
-;@Ahk2Exe-SetMainIcon compose.ico
+;@Ahk2Exe-SetMainIcon assets/compose.ico
 ;@Ahk2Exe-Base ../v2/AutoHotKey64.exe
 ;@Ahk2Exe-ExeName compose-keys
 ;@Ahk2Exe-SetCopyright ©2026
@@ -10,21 +10,26 @@
 
 
 ; Local assets
-AssetDir := A_IsCompiled ? A_AppData . "\ComposeKeys" : A_ScriptDir
+AssetDir := A_IsCompiled 
+    ? A_AppData . "\ComposeKeys" 
+    : A_ScriptDir . "\assets"
+
 if A_IsCompiled
 {
     DirCreate(AssetDir)
+
+    FileInstall("assets\style.css", AssetDir "\style.css", 1)
+    FileInstall("assets\help.html", AssetDir "\help.html", 1)
+    FileInstall("assets\keytable.html", AssetDir "\keytable.html", 1)
+    FileInstall("assets\compose.ico", AssetDir "\compose.ico", 1)
+    FileInstall("assets\compose2.ico", AssetDir "\compose2.ico", 1)
+    if !FileExist(AssetDir "\config.ini")
+    {
+        FileInstall("config.ini", AssetDir "\config.ini", 1)
+    }
 }
 
-FileInstall("style.css", AssetDir "\style.css", 1)
-FileInstall("help.html", AssetDir "\help.html", 1)
-FileInstall("keytable.html", AssetDir "\keytable.html", 1)
-FileInstall("compose.ico", AssetDir "\compose.ico", 1)
-FileInstall("compose2.ico", AssetDir "\compose2.ico", 1)
-if !FileExist(AssetDir "\config.ini")
-{
-    FileInstall("config.ini", AssetDir "\config.ini", 1)
-}
+IniFile := (A_IsCompiled ? AssetDir : A_ScriptDir) . "\config.ini"
 
 
 ; UI
@@ -90,7 +95,7 @@ ToggleDisabled(*) {
 }
 
 ShowIniEditor(*) {
-    IniSettingsEditor("Compose Keys", AssetDir "\config.ini")
+    IniSettingsEditor("Compose Keys", IniFile)
     ReadIni()
 }
 
@@ -106,10 +111,10 @@ ShowAbout(*) {
 ReadIni(*) {
     old_key := IsSet(ModifierKey) ? GetAhkKeyName(ModifierKey) : ""
     
-    global SoundOnReset  := IniRead(AssetDir "\config.ini", "Settings", "SoundOnReset")
-    global ModifierKey   := IniRead(AssetDir "\config.ini", "Settings", "ModifierKey")
-    global UseCapsLock   := IniRead(AssetDir "\config.ini", "Settings", "UseCapsLock")
-    global ResetDelay    := IniRead(AssetDir "\config.ini", "Settings", "ResetDelay")
+    global SoundOnReset  := IniRead(IniFile, "Settings", "SoundOnReset")
+    global ModifierKey   := IniRead(IniFile, "Settings", "ModifierKey")
+    global UseCapsLock   := IniRead(IniFile, "Settings", "UseCapsLock")
+    global ResetDelay    := IniRead(IniFile, "Settings", "ResetDelay")
     
     A_TrayMenu.Rename("1&", ModifierKey)
     SetCapsLockMenuItem()
