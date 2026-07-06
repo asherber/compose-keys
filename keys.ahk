@@ -30,9 +30,7 @@
 ::oo::cp("°")   ; Degree sign
 ::`+-::cp("±")  ; Plus-minus sign
 ::`^2::cp("²")  ; Superscript two
-::.2::cp("²")   ; Superscript two
 ::`^3::cp("³")  ; Superscript three
-::.3::cp("³")   ; Superscript three
 ::mu::cp("µ")   ; Micro sign
 ::p!::cp("¶")   ; Pilcrow sign
 ::P!::cp("¶")   ; Pilcrow sign
@@ -41,7 +39,6 @@
 ::`, ::cp("¸")  ; Cedilla
 :: `,::cp("¸")  ; Cedilla
 ::`^1::cp("¹")  ; Superscript one
-::.1::cp("¹")   ; Superscript one
 ::.o::cp("º")   ; Masculine ordinal indicator
 ::>>::cp("»")   ; Right-pointing double angle quotation mark
 ::14::cp("¼")   ; Vulgar fraction one quarter
@@ -331,8 +328,6 @@
 ::.<::cp("‹")   ; Single left-pointing angle quotation mark
 ::.>::cp("›")   ; Single right-pointing angle quotation mark
 ::`^0::cp("⁰")  ; Superscript zero
-::.0::cp("⁰")   ; Superscript zero
-::`^i::cp("ⁱ")  ; Superscript small letter i
 ::`^4::cp("⁴")  ; Superscript four
 ::`^5::cp("⁵")  ; Superscript five
 ::`^6::cp("⁶")  ; Superscript six
@@ -380,8 +375,10 @@
 ::=c::cp("€")   ; Euro sign
 ::E=::cp("€")   ; Euro sign
 ::=E::cp("€")   ; Euro sign
-::`^S::cp("℠")  ; Service mark
-::`^T::cp("™")  ; Trade mark sign
+::sm::cp("℠")  ; Service mark
+::SM::cp("℠")  ; Service mark
+::tm::cp("™")  ; Trade mark sign
+::TM::cp("™")  ; Trade mark sign
 ::"\::cp("〝")   ; Reversed double prime quotation mark
 ::"/::cp("〞")   ; Double prime quotation mark
 ::<-::cp("←")   ; Small arrow to left
@@ -395,3 +392,11 @@
 ::\/::cp("✔")   ; Fat tick/check mark
 ::**::cp("✻")   ; Teardrop-spoked asterisk
 ::.=::cp("•")   ; Bullet
+::=_::cp("≡")   ; Identical to
+::/=::cp("≠")   ; Not equal to
+::`!=::cp("≠")  ; Not equal to
+::_<::cp("≤")   ; Less than or equal to
+::_>::cp("≥")   ; Greater than or equal to
+::`:.::cp("∴")  ; Therefore
+::3.::cp("…")   ; Ellipsis
+::.3::cp("…")   ; Ellipsis

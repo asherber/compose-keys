@@ -1,0 +1,1 @@
+::qq::cp("FOO")   ; some comment
