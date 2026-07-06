@@ -65,7 +65,8 @@ jobs:
           path: source
 
       - name: Sync site files
-        run: cp source/* .
+        run: |
+          cp source/assets/* .
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v7
