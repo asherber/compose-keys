@@ -113,12 +113,14 @@
       </p>
       <ul>
         <li>
-          The key sequence follows the usual AutoHotKey rules, so if it contains
-          any character with a special meaning to AutoHotKey, like
-          <code>^</code>, that character needs to be escaped with a backtick.
-          For example, the included sequence for <code>ĥ</code> (h with
-          circumflex) is defined as <code>`^h</code>, but you would only need to
-          type <code>^h</code> to trigger the replacement.
+          <p>
+            The following characters in a key sequence need to be escaped with a
+            backtick (<code>`</code>):
+          </p>
+          <ul>
+            <li>Any backtick</li>
+            <li>A colon at the end of the sequence</li>
+          </ul>
         </li>
         <li>Key sequences are not limited to two characters.</li>
         <li>

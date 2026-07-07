@@ -54,7 +54,10 @@ Each definition line in this file should be an AutoHotKey hotstring definition m
 
 `<keys>` is the sequence you want to type, and `<repl>` is the character or string you want to replace it with. For example, `::qq::cp("Foo")` can be used to replace `qq` with `Foo`.
 
-- The key sequence follows the usual AutoHotKey rules, so if it contains any character with a special meaning to AutoHotKey, like `^`, that character needs to be escaped with a backtick. For example, the included sequence for `ĥ` (h with circumflex) is defined as `` `^h ``, but you would only need to type `^h` to trigger the replacement.
+- The following characters in a key sequence need to be escaped with a backtick (`` ` ``):
+  - Any backtick
+  - A colon at the end of the sequence
+
 - Key sequences are not limited to two characters.
 - The replacement must look exactly like the above, as an argument passed to the function `cp()`. 
 - Do not add any hotstring modifiers between the first two colons.
