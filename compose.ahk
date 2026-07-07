@@ -6,7 +6,7 @@
 ;@Ahk2Exe-ExeName compose-keys
 ;@Ahk2Exe-SetCopyright ©2026
 ;@Ahk2Exe-SetDescription Compose Keys
-;@Ahk2Exe-SetVersion 2.2.1
+;@Ahk2Exe-SetVersion 2.2.2
 
 
 ; Local assets

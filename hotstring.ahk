@@ -49,7 +49,7 @@ ResetState() {
 
 
 
-; Trigger inside words; replace immediately; case-sensitive; no auto-backspace; execute function
+; Trigger inside words; replace immediately; case-sensitive; no auto-backspace; execute function; clear buffer
 #Hotstring ? * c b0 x z
 
 ; Main list of character replacements, usually consisting of 2-character triggers,
